@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS Maritime Defense & Pure ACO Route Optimizer | Exp 4 Prototype</title>
+  <meta name="description" content="Autonomous Maritime Fleet Defense and Risk-Aware Route Optimization System prototype powered solely by Ant Colony Optimization (ACO) for the Strait of Malacca.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Maritime Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Vanilla CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Command Header -->
+    <header class="top-nav">
+      <div class="brand-block">
+        <div class="radar-pulse"></div>
+        <div>
+          <h1 class="system-title">AEGIS // MARITIME DEFENSE &amp; ROUTE OPTIMIZATION</h1>
+          <p class="system-subtitle">EXPERIMENT 4 UML ACTIVITY DIAGRAM PROTOTYPE • STRAIT OF MALACCA • PURE ACO ENGINE</p>
+        </div>
+      </div>
+
+      <div class="nav-telemetry">
+        <div class="telemetry-badge pulse-border">
+          <span class="dot live"></span>
+          <span>CORRIDOR: <strong>MALACCA / SINGAPORE</strong></span>
+        </div>
+        <div class="telemetry-badge">
+          <span>ROLE: <strong id="active-role-badge">GUEST / COMMANDER</strong></span>
+        </div>
+        <div class="telemetry-badge">
+          <span>ALGORITHM: <strong class="text-cyan">PURE ACO</strong></span>
+        </div>
+        <button id="btn-export-records" class="btn btn-sm btn-outline" title="Export Operational Records">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Records
+        </button>
+      </div>
+    </header>
+
+    <!-- Activity Diagram Swimlane Progress Bar -->
+    <section class="activity-stepper-container">
+      <div class="activity-stepper" id="activity-stepper">
+        <div class="step-node active" data-step="1" id="step-node-1">
+          <div class="step-num">1</div>
+          <div class="step-label">Data Ingestion</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" data-step="2" id="step-node-2">
+          <div class="step-num">2</div>
+          <div class="step-label">Auth &amp; Role</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" data-step="3" id="step-node-3">
+          <div class="step-num">3</div>
+          <div class="step-label">Threat Monitor</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" data-step="4" id="step-node-4">
+          <div class="step-num">4</div>
+          <div class="step-label">Pure ACO Solver</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" data-step="5" id="step-node-5">
+          <div class="step-num">5</div>
+          <div class="step-label">Commander Review</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" data-step="6" id="step-node-6">
+          <div class="step-num">6</div>
+          <div class="step-label">Voyage Transit</div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-node" data-step="7" id="step-node-7">
+          <div class="step-num">7</div>
+          <div class="step-label">Operational Logs</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Split: Left Console & Right Map -->
+    <main class="main-layout">
+      
+      <!-- Left Control & Telemetry Panel -->
+      <aside class="control-panel">
+        
+        <!-- Tab Navigation for Activity Diagram Swimlanes -->
+        <div class="panel-tabs">
+          <button class="tab-btn active" data-tab="tab-workflow">Workflow Console</button>
+          <button class="tab-btn" data-tab="tab-aco-params">ACO Tuner</button>
+          <button class="tab-btn" data-tab="tab-audit-logs">Audit Log (<span id="log-count">0</span>)</button>
+        </div>
+
+        <!-- TAB 1: Main Workflow Console -->
+        <div class="tab-content active" id="tab-workflow">
+          
+          <!-- SECTION 1: External Maritime Data Feeds -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">📡</span>
+                <span>External Maritime Data Sources</span>
+              </div>
+              <button id="btn-refresh-data" class="btn btn-xs btn-outline">Validate All</button>
+            </div>
+            <div class="card-body">
+              <div class="data-feed-grid">
+                <div class="feed-item" id="feed-intel">
+                  <div class="feed-status-dot online"></div>
+                  <div class="feed-info">
+                    <div class="feed-name">Maritime Intel (Piracy)</div>
+                    <div class="feed-metric text-crimson" id="feed-intel-metric">996 Incidents Active</div>
+                  </div>
+                </div>
+                <div class="feed-item" id="feed-weather">
+                  <div class="feed-status-dot online"></div>
+                  <div class="feed-info">
+                    <div class="feed-name">Weather &amp; Ocean Current</div>
+                    <div class="feed-metric text-amber">SW Monsoon (-0.8 kt drift)</div>
+                  </div>
+                </div>
+                <div class="feed-item" id="feed-tidal">
+                  <div class="feed-status-dot online"></div>
+                  <div class="feed-info">
+                    <div class="feed-name">Tidal &amp; Navigation Data</div>
+                    <div class="feed-metric text-cyan">Bathymetric Shoals Mapped</div>
+                  </div>
+                </div>
+                <div class="feed-item" id="feed-restricted">
+                  <div class="feed-status-dot online"></div>
+                  <div class="feed-info">
+                    <div class="feed-name">Restricted Zones (TSS)</div>
+                    <div class="feed-metric text-violet">Phillips Chokepoint Active</div>
+                  </div>
+                </div>
+                <div class="feed-item" id="feed-ais">
+                  <div class="feed-status-dot online" id="dot-feed-ais"></div>
+                  <div class="feed-info">
+                    <div class="feed-name">AIS / GPS Vessel Stream</div>
+                    <div class="feed-metric text-emerald" id="label-feed-ais">Live Satellite Link</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fallback Demonstration Box -->
+              <div class="fallback-tester mt-2">
+                <span class="fallback-note">Activity Diagram Test: Simulate Missing Source &amp; Fallback</span>
+                <button id="btn-simulate-failure" class="btn btn-xs btn-warning">Drop AIS Feed</button>
+                <button id="btn-restore-failure" class="btn btn-xs btn-outline">Restore Feed</button>
+              </div>
+              <div id="fallback-alert-banner" class="alert-banner hidden"></div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: Role Authentication & Security -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">🛡️</span>
+                <span>User Authentication &amp; Role Dispatch</span>
+              </div>
+              <span class="badge badge-emerald" id="auth-status-badge">Authenticated</span>
+            </div>
+            <div class="card-body">
+              <div class="role-selector-group">
+                <button class="role-chip active" data-user="commander" data-pwd="navy2026">
+                  <strong>Fleet Commander</strong>
+                  <small>Tactical Approval</small>
+                </button>
+                <button class="role-chip" data-user="crew" data-pwd="helm2026">
+                  <strong>Vessel Crew</strong>
+                  <small>Helm &amp; Deviations</small>
+                </button>
+                <button class="role-chip" data-user="admin" data-pwd="admin2026">
+                  <strong>System Admin</strong>
+                  <small>ACO Parameter Tuning</small>
+                </button>
+              </div>
+              
+              <div class="auth-attempt-row mt-2">
+                <button id="btn-test-lockout" class="btn btn-xs btn-outline text-crimson">Test 3-Attempt Account Lockout</button>
+                <button id="btn-unlock-account" class="btn btn-xs btn-outline text-cyan">Reset Lockout</button>
+                <span id="auth-feedback" class="auth-feedback text-muted">Active: commander</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 3: Threat Monitoring & AI Risk Analysis -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">⚠️</span>
+                <span>Threat Monitoring &amp; AI Risk Analysis</span>
+              </div>
+              <span class="badge badge-crimson pulse-slow">HIGH THREAT ZONE</span>
+            </div>
+            <div class="card-body">
+              <div class="threat-alert-box">
+                <div class="threat-icon-large">🚨</div>
+                <div>
+                  <div class="threat-headline">PIRACY CLUSTER DETECTED NEAR SINGAPORE APPROACH</div>
+                  <div class="threat-sub">Historical attack density exceeds safety threshold in Phillips Channel (380 incidents recorded). Southwestern Monsoon squalls intensifying.</div>
+                </div>
+              </div>
+
+              <!-- Voyage Waypoint Selector -->
+              <div class="route-config-grid mt-2">
+                <div class="form-group">
+                  <label for="select-origin">Origin Port:</label>
+                  <select id="select-origin" class="form-control">
+                    <option value="Penang (Malaysia)" selected>Penang (Malaysia)</option>
+                    <option value="Sabang (NW Gateway)">Sabang (NW Gateway, Sumatra)</option>
+                    <option value="Belawan (Sumatra)">Belawan (Medan, Sumatra)</option>
+                    <option value="Port Klang (Malaysia)">Port Klang (Kuala Lumpur)</option>
+                    <option value="Dumai (Sumatra)">Dumai (Sumatra)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="select-destination">Destination Port:</label>
+                  <select id="select-destination" class="form-control">
+                    <option value="Singapore (SE Gateway)" selected>Singapore (SE Gateway)</option>
+                    <option value="Dumai (Sumatra)">Dumai (Sumatra)</option>
+                    <option value="Port Klang (Malaysia)">Port Klang (Malaysia)</option>
+                    <option value="Belawan (Sumatra)">Belawan (Sumatra)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <button id="btn-run-aco" class="btn btn-primary btn-block">
+                  <span class="spinner hidden" id="aco-spinner"></span>
+                  <span id="aco-btn-text">⚡ RUN PURE ACO ROUTE OPTIMIZER</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 4: ACO Convergence & Commander Review -->
+          <div class="card glass-card" id="card-route-evaluation">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">🐜</span>
+                <span>ACO Route Evaluation &amp; Alternate Corridors</span>
+              </div>
+              <span class="badge badge-cyan" id="badge-opt-status">Pending Run</span>
+            </div>
+            <div class="card-body">
+              
+              <!-- Metrics Comparison Cards -->
+              <div class="route-compare-container" id="route-compare-box">
+                <div class="route-card primary-card active" id="card-primary-route">
+                  <div class="route-card-title">
+                    <span class="pill pill-cyan">PRIMARY ACO ROUTE</span>
+                    <span class="route-cost-tag" id="prim-cost">--</span>
+                  </div>
+                  <div class="metric-row">
+                    <div class="metric-cell">
+                      <div class="metric-val text-cyan" id="prim-dist">--</div>
+                      <div class="metric-lbl">Distance (nm)</div>
+                    </div>
+                    <div class="metric-cell">
+                      <div class="metric-val text-cyan" id="prim-time">--</div>
+                      <div class="metric-lbl">Transit (hrs)</div>
+                    </div>
+                    <div class="metric-cell">
+                      <div class="metric-val" id="prim-risk">--</div>
+                      <div class="metric-lbl">Mean Risk</div>
+                    </div>
+                    <div class="metric-cell">
+                      <div class="metric-val" id="prim-peak">--</div>
+                      <div class="metric-lbl">Peak Threat</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="route-card alternate-card" id="card-alternate-route">
+                  <div class="route-card-title">
+                    <span class="pill pill-emerald">ALTERNATE ACO ROUTE</span>
+                    <span class="route-cost-tag" id="alt-cost">--</span>
+                  </div>
+                  <div class="metric-row">
+                    <div class="metric-cell">
+                      <div class="metric-val text-emerald" id="alt-dist">--</div>
+                      <div class="metric-lbl">Distance (nm)</div>
+                    </div>
+                    <div class="metric-cell">
+                      <div class="metric-val text-emerald" id="alt-time">--</div>
+                      <div class="metric-lbl">Transit (hrs)</div>
+                    </div>
+                    <div class="metric-cell">
+                      <div class="metric-val" id="alt-risk">--</div>
+                      <div class="metric-lbl">Mean Risk</div>
+                    </div>
+                    <div class="metric-cell">
+                      <div class="metric-val" id="alt-peak">--</div>
+                      <div class="metric-lbl">Peak Threat</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Commander Approval Decision Actions -->
+              <div class="commander-decision-bar mt-3" id="commander-action-bar">
+                <div class="decision-label">Fleet Commander Decision:</div>
+                <div class="btn-group-decision">
+                  <button id="btn-approve-route" class="btn btn-success" disabled>
+                    ✓ Approve Safe Route
+                  </button>
+                  <button id="btn-reject-route" class="btn btn-danger" disabled>
+                    ✗ Reject &amp; Recalculate (ACO Taboo)
+                  </button>
+                </div>
+              </div>
+              <div id="approval-status-message" class="approval-msg text-muted mt-1">Run ACO optimizer to evaluate candidates.</div>
+            </div>
+          </div>
+
+          <!-- SECTION 5: Vessel Transit & Continuous Monitoring -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">🚢</span>
+                <span>Voyage Execution &amp; Live Tracking</span>
+              </div>
+              <span class="badge badge-outline" id="vessel-status-badge">MOORED</span>
+            </div>
+            <div class="card-body">
+              <div class="vessel-telemetry-grid">
+                <div class="vessel-kpi">
+                  <div class="kpi-label">Vessel</div>
+                  <div class="kpi-val" id="vessel-name">MV Sentinel Guardian</div>
+                </div>
+                <div class="vessel-kpi">
+                  <div class="kpi-label">Speed / Drift</div>
+                  <div class="kpi-val">18.0 kt / -0.8 kt</div>
+                </div>
+                <div class="vessel-kpi">
+                  <div class="kpi-label">Current Position</div>
+                  <div class="kpi-val text-cyan" id="vessel-pos">5.40°N, 100.28°E</div>
+                </div>
+                <div class="vessel-kpi">
+                  <div class="kpi-label">Transit Progress</div>
+                  <div class="kpi-val text-emerald" id="vessel-progress">0%</div>
+                </div>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="progress-bar-bg mt-2">
+                <div class="progress-bar-fill" id="transit-progress-bar" style="width: 0%;"></div>
+              </div>
+
+              <div class="voyage-controls mt-3">
+                <button id="btn-step-voyage" class="btn btn-sm btn-outline" disabled>Step Forward ▶</button>
+                <button id="btn-play-voyage" class="btn btn-sm btn-primary" disabled>Auto Transit ⏯</button>
+                <button id="btn-report-deviation" class="btn btn-sm btn-warning" disabled>Report Deviation ⚠️</button>
+                <button id="btn-reset-voyage" class="btn btn-sm btn-outline">Reset</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB 2: ACO Tuner & Convergence Chart -->
+        <div class="tab-content" id="tab-aco-params">
+          <div class="card glass-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">⚙️</span>
+                <span>Ant Colony Optimization Parameters</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="param-row">
+                <label>Ant Population ($N_{\text{ants}}$):</label>
+                <input type="range" id="param-ants" min="15" max="50" value="28" class="range-slider">
+                <span id="val-param-ants" class="slider-val">28</span>
+              </div>
+              <div class="param-row">
+                <label>Max Iterations ($N_{\text{iter}}$):</label>
+                <input type="range" id="param-iter" min="15" max="60" value="35" class="range-slider">
+                <span id="val-param-iter" class="slider-val">35</span>
+              </div>
+              <div class="param-row">
+                <label>Pheromone Sensitivity ($\alpha$):</label>
+                <input type="range" id="param-alpha" min="0.5" max="3.0" step="0.1" value="1.0" class="range-slider">
+                <span id="val-param-alpha" class="slider-val">1.0</span>
+              </div>
+              <div class="param-row">
+                <label>Heuristic Desirability ($\beta$):</label>
+                <input type="range" id="param-beta" min="1.0" max="5.0" step="0.1" value="3.2" class="range-slider">
+                <span id="val-param-beta" class="slider-val">3.2</span>
+              </div>
+              <div class="param-row">
+                <label>Evaporation Rate ($\rho$):</label>
+                <input type="range" id="param-evap" min="0.1" max="0.6" step="0.05" value="0.30" class="range-slider">
+                <span id="val-param-evap" class="slider-val">0.30</span>
+              </div>
+
+              <!-- Convergence Canvas Chart -->
+              <div class="mt-3">
+                <div class="chart-header">
+                  <span>Colony Cost Convergence Curve</span>
+                  <small class="text-muted">Best vs Average Cost</small>
+                </div>
+                <canvas id="convergenceChart" width="380" height="200" class="convergence-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: Operational Audit Log -->
+        <div class="tab-content" id="tab-audit-logs">
+          <div class="card glass-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="icon">📜</span>
+                <span>Operational Audit Records (Exp 4 Activity Log)</span>
+              </div>
+              <button id="btn-clear-logs" class="btn btn-xs btn-outline">Clear</button>
+            </div>
+            <div class="card-body">
+              <div class="audit-log-stream" id="audit-log-container">
+                <!-- Log entries will be dynamically injected here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Panel: Interactive Maritime Tactical Map -->
+      <section class="map-viewport-container">
+        
+        <!-- Map Controls & Layer Toggles -->
+        <div class="map-hud-overlay">
+          <div class="hud-box">
+            <div class="hud-title">TACTICAL MAP LAYERS</div>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-piracy-layer" checked>
+              <span class="toggle-mark crimson"></span>
+              <span>Piracy Incidents (996)</span>
+            </label>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-restricted-layer" checked>
+              <span class="toggle-mark violet"></span>
+              <span>Restricted TSS Chokepoints</span>
+            </label>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-candidates-layer" checked>
+              <span class="toggle-mark cyan"></span>
+              <span>Ant Swarm Candidate Trails</span>
+            </label>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-weather-layer" checked>
+              <span class="toggle-mark amber"></span>
+              <span>Weather / Currents</span>
+            </label>
+          </div>
+
+          <div class="hud-box hud-legend">
+            <div class="hud-title">CHART SYMBOLOGY</div>
+            <div class="legend-item"><span class="legend-color cyan-line"></span> Primary Safe ACO Route</div>
+            <div class="legend-item"><span class="legend-color emerald-line"></span> Alternate Safe ACO Route</div>
+            <div class="legend-item"><span class="legend-color crimson-dot"></span> Piracy Attack (IMB/UKMTO)</div>
+            <div class="legend-item"><span class="legend-color purple-dashed"></span> Restricted TSS Chokepoint</div>
+            <div class="legend-item"><span class="legend-color vessel-icon-symbol">▲</span> Active Vessel (MV Sentinel)</div>
+          </div>
+        </div>
+
+        <!-- Leaflet Map Container -->
+        <div id="maritime-map" class="maritime-map"></div>
+
+        <!-- Bottom Map Coordinates HUD -->
+        <div class="map-bottom-bar">
+          <div id="cursor-coords">CURSOR: 3.20°N, 100.50°E</div>
+          <div id="map-scale-info">DATUM: WGS84 • PROJECTION: MERCATOR</div>
+          <div>STATUS: <strong class="text-emerald">OPERATIONAL</strong></div>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Leaflet.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Custom Vanilla JS Application Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
