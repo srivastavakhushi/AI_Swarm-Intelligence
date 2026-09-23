@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local credentials and runtime state
+users.db
+.env
+.env.*
+*.pem
+
+# Generated operational output
+operational_records.json

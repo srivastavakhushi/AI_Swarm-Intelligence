@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS-MARITIME // AI-INTEGRATED COMMAND PLATFORM</title>
+  <meta name="description" content="Autonomous Maritime Fleet Defense and Risk-Aware Route Optimization System powered by Ant Colony Optimization (ACO), A*, Dijkstra, and threat intelligence.">
+  
+  <!-- Sci-Fi Tactical Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@300;400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Maritime Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Aegis Cyber-Maritime CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="aegis-hud-theme">
+
+  <!-- ================================================================= -->
+  <!-- 1. SCI-FI AUTHENTICATION PORTAL (LOGIN OVERLAY - MATCHES UI #2)   -->
+  <!-- ================================================================= -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-grid-bg"></div>
+    <div class="login-radar-sweep"></div>
+    
+    <div class="sci-fi-login-split-container">
+      <!-- Left Column: Branding & Terminal Boot Sequence Stream -->
+      <div class="login-left-terminal-panel">
+        <div class="terminal-brand-header">
+          <div class="cyber-emblem">
+            <div class="pulse-ring"></div>
+            <span class="emblem-symbol">🛡️</span>
+          </div>
+          <h1 class="login-title">AEGIS-MARITIME</h1>
+          <p class="login-subtitle">AI-INTEGRATED COMMAND PLATFORM</p>
+        </div>
+
+        <div class="boot-terminal-log-wrapper">
+          <div class="terminal-header-strip">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="terminal-title">BOOT_SEQUENCE // ENCLAVE_INIT.LOG</span>
+          </div>
+          <div class="terminal-stream" id="login-terminal-stream">
+            <div class="log-line text-cyan">&gt; AEGIS MARITIME AI PLATFORM v4.1.2</div>
+            <div class="log-line">&gt; Initializing secure enclave...</div>
+            <div class="log-line">&gt; Loading cryptographic modules... <span class="text-emerald">OK</span></div>
+            <div class="log-line">&gt; Connecting to SATCOM relay... <span class="text-emerald">OK</span></div>
+            <div class="log-line">&gt; Syncing SONAR array data feed... <span class="text-emerald">OK</span></div>
+            <div class="log-line">&gt; AI inference engine: <span class="text-emerald">ONLINE</span></div>
+            <div class="log-line">&gt; Classification: <span class="text-amber">SECRET // REL TO FVEY</span></div>
+            <div class="log-line text-emerald">&gt; System ready. Authenticate to continue.</div>
+          </div>
+        </div>
+
+        <div class="terminal-footer-meta">
+          <span>EASTERN MEDITERRANEAN THEATRE</span>
+          <span>CLASSIFIED</span>
+        </div>
+      </div>
+
+      <!-- Right Column: Secure Access Form -->
+      <div class="login-right-form-panel">
+        <div class="hud-corner top-left"></div>
+        <div class="hud-corner top-right"></div>
+        <div class="hud-corner bottom-left"></div>
+        <div class="hud-corner bottom-right"></div>
+
+        <div class="secure-access-box">
+          <h2 class="secure-access-title">SECURE ACCESS</h2>
+          <div class="clearance-req-lbl">AUTHORIZED PERSONNEL ONLY - TS/SCI CLEARANCE REQUIRED</div>
+          <div class="access-timestamp"><span class="ind-dot active"></span> <span id="login-live-time">2026-09-09 16:17:13Z</span></div>
+
+          <!-- Preset Selection -->
+          <div class="role-preset-box mt-3">
+            <div class="preset-label">CLEARANCE PRESET:</div>
+            <div class="role-presets">
+              <button type="button" class="preset-btn active" data-user="commander" data-pwd="test123">
+                <span class="preset-role">Fleet Commander</span>
+              </button>
+              <button type="button" class="preset-btn" data-user="crew" data-pwd="test123">
+                <span class="preset-role">Vessel Crew</span>
+              </button>
+              <button type="button" class="preset-btn" data-user="admin" data-pwd="test123">
+                <span class="preset-role">System Admin</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Login Form -->
+          <form id="login-form" class="login-form mt-3">
+            <div class="cyber-input-group">
+              <label for="login-username">OPERATOR ID</label>
+              <div class="input-wrapper">
+                <input type="text" id="login-username" value="commander" required placeholder="Enter operator ID" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="cyber-input-group">
+              <label for="login-password">AUTH TOKEN</label>
+              <div class="input-wrapper">
+                <input type="password" id="login-password" value="test123" required placeholder="Enter auth token">
+              </div>
+            </div>
+
+            <div id="login-error-banner" class="login-error-banner hidden"></div>
+
+            <button type="submit" id="btn-login-submit" class="cyber-btn primary-cyber-btn full-width mt-3">
+              <span class="cyber-btn-text">AUTHENTICATE</span>
+            </button>
+          </form>
+
+          <div class="lockout-recovery-box mt-3 text-center">
+            <button id="btn-login-unlock" type="button" class="text-btn text-cyan text-xs">Use admin / aegis to reset lockout via SQLite</button>
+          </div>
+
+          <div class="legal-disclaimer-text mt-3">
+            Use admin / aegis to access the platform. Unauthorized access is a federal offense under 18 U.S.C. § 1030.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================================= -->
+  <!-- 2. MAIN AEGIS TACTICAL COMMAND PLATFORM UI                       -->
+  <!-- ================================================================= -->
+  <div id="app-container" class="app-container hidden">
+    
+    <!-- Top Cybernetic Header Navigation -->
+    <header class="aegis-header">
+      <div class="header-left-brand">
+        <h1 class="brand-title">AEGIS-MARITIME</h1>
+        <span class="brand-sub">AI-INTEGRATED COMMAND PLATFORM</span>
+      </div>
+
+      <!-- Main Navigation Tabs Bar (5 View Tabs matching UI) -->
+      <nav class="main-view-tabs">
+        <button class="nav-tab-btn active" data-tab="tactical">
+          TACTICAL <span class="nav-tab-badge">3</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="threat-intel">
+          THREAT INTEL
+        </button>
+        <button class="nav-tab-btn" data-tab="vessel-log">
+          VESSEL LOG
+        </button>
+        <button class="nav-tab-btn" data-tab="ai-command">
+          AI COMMAND
+        </button>
+        <button class="nav-tab-btn" data-tab="communications">
+          COMMUNICATIONS
+        </button>
+      </nav>
+
+      <!-- Live KPI Telemetry Block -->
+      <div class="kpi-telemetry-row">
+        <div class="kpi-card">
+          <div class="kpi-lbl">THREAT INDEX</div>
+          <div class="kpi-val-group">
+            <span class="kpi-val text-cyan" id="kpi-threat-index">7.4/10</span>
+            <span class="kpi-delta danger">+1.2</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">CONTACTS</div>
+          <div class="kpi-val-group">
+            <span class="kpi-val text-cyan" id="kpi-contacts-count">8</span>
+            <span class="kpi-delta danger">+2</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">AI CONFIDENCE</div>
+          <div class="kpi-val-group">
+            <span class="kpi-val text-cyan" id="kpi-ai-confidence">89%</span>
+            <span class="kpi-delta text-dim">-5%</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">UNACK ALERTS</div>
+          <div class="kpi-val-group">
+            <span class="kpi-val text-cyan" id="kpi-anomalies-count">3</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">AI ENGINE</div>
+          <div class="kpi-val-group">
+            <span class="kpi-val text-emerald">ONLINE</span>
+            <span class="kpi-delta text-muted">48ms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header Right Meta -->
+      <div class="header-right-meta">
+        <div class="threat-level-badge amber-box">
+          <span class="badge-dot"></span> THREAT: ELEVATED
+        </div>
+        
+        <div class="utc-clock-box">
+          <div class="clock-time" id="utc-clock-time">11:53:41Z</div>
+          <div class="clock-date" id="utc-clock-date">2026-09-09 UTC</div>
+        </div>
+
+        <div class="user-profile-badge">
+          <span class="avatar-rank">RA</span>
+          <div class="profile-details">
+            <span class="officer-name">R. ADML CROSS</span>
+            <span class="clearance-level"><strong id="active-role-badge">TS/SCI</strong></span>
+          </div>
+        </div>
+
+        <div class="header-action-btns">
+          <button id="btn-logout" class="cyber-btn sm-cyber-btn danger-cyber-btn">LOGOUT</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- =============================================================== -->
+    <!-- VIEW TAB 1: TACTICAL COMMAND DASHBOARD (MATCHES UI #1)           -->
+    <!-- =============================================================== -->
+    <main id="view-tactical" class="tab-view-content active">
+      <div class="map-stage">
+        <div id="maritime-map" class="maritime-map-canvas"></div>
+
+        <!-- Floating route console -->
+        <div class="map-overlay route-console">
+          <div class="overlay-title">ROUTE PLANNER</div>
+          <div class="console-field">
+            <label for="select-origin">FROM</label>
+            <select id="select-origin" class="cyber-select-sm">
+              <option value="Penang (Malaysia)" selected>Penang (Malaysia)</option>
+              <option value="Sabang (NW Gateway)">Sabang (Sumatra)</option>
+              <option value="Belawan (Sumatra)">Belawan (Sumatra)</option>
+              <option value="Port Klang (Malaysia)">Port Klang (Malaysia)</option>
+              <option value="Dumai (Sumatra)">Dumai (Sumatra)</option>
+              <option value="Singapore (SE Gateway)">Singapore (SE Gateway)</option>
+            </select>
+          </div>
+
+          <div class="console-field">
+            <label for="select-destination">TO</label>
+            <select id="select-destination" class="cyber-select-sm">
+              <option value="Singapore (SE Gateway)" selected>Singapore (SE Gateway)</option>
+              <option value="Penang (Malaysia)">Penang (Malaysia)</option>
+              <option value="Dumai (Sumatra)">Dumai (Sumatra)</option>
+              <option value="Port Klang (Malaysia)">Port Klang (Malaysia)</option>
+              <option value="Belawan (Sumatra)">Belawan (Sumatra)</option>
+              <option value="Sabang (NW Gateway)">Sabang (Sumatra)</option>
+            </select>
+          </div>
+
+          <div class="console-field">
+            <label for="select-algorithm">SOLVER</label>
+            <select id="select-algorithm" class="cyber-select-sm">
+              <option value="compare" selected>COMPARE ALL</option>
+              <option value="aco">ACO (Ant Swarm)</option>
+              <option value="astar">A* Search</option>
+              <option value="dijkstra">Dijkstra</option>
+            </select>
+          </div>
+
+          <button id="btn-run-aco" class="cyber-btn sm-cyber-btn primary-cyber-btn full-width">
+            <span class="spinner hidden" id="aco-spinner"></span>
+            <span id="aco-btn-text">⚡ RUN SOLVER</span>
+          </button>
+        </div>
+
+        <!-- Drawer toggles -->
+        <div class="map-overlay stage-toggles">
+          <button class="stage-toggle-btn" id="btn-toggle-contacts">CONTACTS</button>
+          <button class="stage-toggle-btn" id="btn-toggle-layers">LAYERS</button>
+          <button class="stage-toggle-btn" id="btn-toggle-analysis">ANALYSIS</button>
+        </div>
+
+        <!-- Map layer switches -->
+        <div class="map-overlay layers-popover hidden" id="layers-popover">
+          <div class="overlay-title">MAP LAYERS</div>
+          <label class="hud-toggle-sm">
+            <input type="checkbox" id="toggle-aco-layer" checked>
+            <span class="toggle-mark cyan"></span> ACO Route
+          </label>
+          <label class="hud-toggle-sm">
+            <input type="checkbox" id="toggle-astar-layer" checked>
+            <span class="toggle-mark amber"></span> A* Route
+          </label>
+          <label class="hud-toggle-sm">
+            <input type="checkbox" id="toggle-dijkstra-layer" checked>
+            <span class="toggle-mark violet"></span> Dijkstra Route
+          </label>
+          <label class="hud-toggle-sm">
+            <input type="checkbox" id="toggle-piracy-layer" checked>
+            <span class="toggle-mark crimson"></span> Piracy Threats
+          </label>
+          <label class="hud-toggle-sm">
+            <input type="checkbox" id="toggle-restricted-layer" checked>
+            <span class="toggle-mark violet"></span> Restricted Zones
+          </label>
+        </div>
+
+        <!-- Voyage execution controls -->
+        <div class="map-overlay voyage-bar">
+          <button id="btn-approve-route" class="cyber-btn sm-cyber-btn success-cyber-btn" disabled>✓ Approve</button>
+          <button id="btn-reject-route" class="cyber-btn sm-cyber-btn danger-cyber-btn" disabled>✗ Recalc</button>
+          <button id="btn-step-voyage" class="cyber-btn sm-cyber-btn" disabled>Step ▶</button>
+          <button id="btn-play-voyage" class="cyber-btn sm-cyber-btn accent-cyber-btn" disabled>Auto ⏯</button>
+          <button id="btn-report-deviation" class="cyber-btn sm-cyber-btn warning-cyber-btn" disabled>Deviate ⚠️</button>
+          <button id="btn-reset-voyage" class="cyber-btn sm-cyber-btn">Reset</button>
+        </div>
+
+        <div class="map-overlay coords-chip">
+          <span id="cursor-coords">CURSOR: --.---° N, ---.---° E</span>
+        </div>
+
+        <!-- Slide-in contacts drawer -->
+        <aside class="stage-drawer left" id="contacts-drawer">
+          <div class="drawer-head">
+            <span>TRACKED CONTACTS</span>
+            <button class="drawer-close" data-close="contacts-drawer">×</button>
+          </div>
+          <div class="search-box-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="contact-search-input" class="cyber-search-input" placeholder="SEARCH CONTACTS..." autocomplete="off">
+          </div>
+          <div class="contacts-scroll-list" id="contacts-list-container">
+            <!-- Dynamically populated tracked contacts -->
+          </div>
+        </aside>
+
+        <!-- Slide-in analysis drawer -->
+        <aside class="stage-drawer right" id="analysis-drawer">
+          <div class="drawer-head">
+            <span>ROUTE ANALYSIS</span>
+            <button class="drawer-close" data-close="analysis-drawer">×</button>
+          </div>
+
+          <div class="panel-header-strip">
+            <button class="analysis-tab-btn active" id="right-tab-btn-ai">SUMMARY</button>
+            <button class="analysis-tab-btn" id="right-tab-btn-routes">MATRIX</button>
+            <button class="analysis-tab-btn" id="right-tab-btn-coords">WAYPOINTS</button>
+          </div>
+
+          <div class="ai-analysis-viewport" id="ai-tactical-analysis-content">
+            <div class="target-intel-card">
+              <div class="intel-title">
+                <span class="text-cyan">NO ROUTE SOLVED</span>
+                <span class="threat-badge neutral">IDLE</span>
+              </div>
+              <div class="intel-sub-id">STRAIT OF MALACCA • WATER-ONLY ROUTING</div>
+              <div class="intel-assessment-box mt-2">
+                <div class="box-lbl">// READY</div>
+                <ul class="assessment-list mt-1">
+                  <li>Select an origin and destination port, then run the solver.</li>
+                  <li>ACO, A* and Dijkstra are each constrained to navigable water.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-analysis-viewport hidden" id="route-comparison-content">
+            <div class="route-matrix-grid">
+              <div class="matrix-card aco-card">
+                <div class="matrix-head"><span class="pill-dot cyan"></span> ACO (Ant Swarm)</div>
+                <div class="matrix-row"><span>Distance:</span> <strong id="matrix-aco-dist">— NM</strong></div>
+                <div class="matrix-row"><span>Transit Time:</span> <strong id="matrix-aco-time">— HRS</strong></div>
+                <div class="matrix-row"><span>Mean Risk:</span> <strong class="text-emerald" id="matrix-aco-risk">—</strong></div>
+                <div class="matrix-row"><span>Peak Threat:</span> <strong class="text-amber" id="matrix-aco-peak">—</strong></div>
+                <div class="matrix-row"><span>Cost Score:</span> <strong id="matrix-aco-cost">—</strong></div>
+              </div>
+
+              <div class="matrix-card astar-card mt-2">
+                <div class="matrix-head"><span class="pill-dot yellow"></span> A* (Risk-Aware)</div>
+                <div class="matrix-row"><span>Distance:</span> <strong id="matrix-astar-dist">— NM</strong></div>
+                <div class="matrix-row"><span>Transit Time:</span> <strong id="matrix-astar-time">— HRS</strong></div>
+                <div class="matrix-row"><span>Mean Risk:</span> <strong class="text-amber" id="matrix-astar-risk">—</strong></div>
+                <div class="matrix-row"><span>Peak Threat:</span> <strong class="text-crimson" id="matrix-astar-peak">—</strong></div>
+                <div class="matrix-row"><span>Cost Score:</span> <strong id="matrix-astar-cost">—</strong></div>
+              </div>
+
+              <div class="matrix-card dijkstra-card mt-2">
+                <div class="matrix-head"><span class="pill-dot green"></span> Dijkstra (Shortest)</div>
+                <div class="matrix-row"><span>Distance:</span> <strong id="matrix-dijk-dist">— NM</strong></div>
+                <div class="matrix-row"><span>Transit Time:</span> <strong id="matrix-dijk-time">— HRS</strong></div>
+                <div class="matrix-row"><span>Mean Risk:</span> <strong class="text-crimson" id="matrix-dijk-risk">—</strong></div>
+                <div class="matrix-row"><span>Peak Threat:</span> <strong class="text-crimson" id="matrix-dijk-peak">—</strong></div>
+                <div class="matrix-row"><span>Cost Score:</span> <strong id="matrix-dijk-cost">—</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-analysis-viewport hidden" id="route-waypoints-content">
+            <div class="waypoints-table-wrapper">
+              <table class="waypoints-table">
+                <thead>
+                  <tr>
+                    <th>WP#</th>
+                    <th>LATITUDE</th>
+                    <th>LONGITUDE</th>
+                    <th>HEADING</th>
+                  </tr>
+                </thead>
+                <tbody id="waypoints-table-body">
+                  <!-- Populated dynamically on route calculation -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="mini-telemetry-box">
+            <div class="box-title">LIVE HELM TELEMETRY</div>
+            <div class="telemetry-grid">
+              <div>COORDS: <strong class="text-cyan" id="sidebar-coords">—</strong></div>
+              <div>SPEED: <strong class="text-cyan" id="sidebar-speed">18.0 KTS</strong></div>
+              <div>HEADING: <strong class="text-cyan" id="sidebar-heading">—</strong></div>
+              <div>STATUS: <strong class="text-emerald" id="sidebar-status-badge">MOORED</strong></div>
+            </div>
+            <div class="transit-progress-strip mt-1">
+              <div class="meta-row">
+                <span>VOYAGE TRANSIT:</span>
+                <strong class="text-emerald" id="sidebar-progress-pct">0%</strong>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="transit-progress-bar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- VIEW TAB 2: THREAT INTELLIGENCE (MATCHES UI #3)                  -->
+    <!-- =============================================================== -->
+    <main id="view-threat-intel" class="tab-view-content">
+      <div class="intel-dashboard-wrapper">
+        <div class="intel-header-bar">
+          <div>
+            <h2 class="intel-main-title">THREAT INTELLIGENCE</h2>
+            <div class="intel-sub-title">EASTERN MEDITERRANEAN - CLASSIFICATION: SECRET</div>
+          </div>
+          
+          <div class="intel-filter-buttons">
+            <button class="filter-btn active" data-severity="ALL">ALL</button>
+            <button class="filter-btn critical" data-severity="CRITICAL">CRITICAL</button>
+            <button class="filter-btn high" data-severity="HIGH">HIGH</button>
+            <button class="filter-btn medium" data-severity="MEDIUM">MEDIUM</button>
+            <button class="filter-btn low" data-severity="LOW">LOW</button>
+          </div>
+        </div>
+
+        <div class="threat-cards-container" id="threat-intel-cards-list">
+          <!-- Populated dynamically matching Image #3 -->
+        </div>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- VIEW TAB 3: VESSEL LOG DATA TABLE (MATCHES UI #4)                -->
+    <!-- =============================================================== -->
+    <main id="view-vessel-log" class="tab-view-content">
+      <div class="vessel-log-wrapper">
+        <div class="vessel-log-header">
+          <div>
+            <h2 class="log-main-title">VESSEL LOG</h2>
+            <div class="log-sub-title">8 CONTACTS - EASTERN MEDITERRANEAN</div>
+          </div>
+
+          <div class="log-sort-group">
+            <button class="sort-btn" id="sort-btn-id">SORT: ID</button>
+            <button class="sort-btn active" id="sort-btn-threat">SORT: THREAT</button>
+            <button class="sort-btn" id="sort-btn-speed">SORT: SPEED</button>
+          </div>
+        </div>
+
+        <div class="vessel-table-container">
+          <table class="vessel-grid-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>NAME</th>
+                <th>CLASS</th>
+                <th>FLAG</th>
+                <th>LAT</th>
+                <th>LNG</th>
+                <th>HDG</th>
+                <th>SPEED</th>
+                <th>DEPTH</th>
+                <th>THREAT</th>
+                <th>AI CONF.</th>
+                <th>LAST CONTACT</th>
+                <th>MMSI</th>
+              </tr>
+            </thead>
+            <tbody id="vessel-log-table-body">
+              <!-- Dynamically populated matching Image #4 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- VIEW TAB 4: COMMUNICATIONS CONSOLE (MATCHES UI #5)               -->
+    <!-- =============================================================== -->
+    <main id="view-communications" class="tab-view-content">
+      <div class="comms-layout-wrapper">
+        <!-- Left Side: Radio Channels -->
+        <aside class="radio-channels-panel">
+          <div class="panel-head-title">RADIO CHANNELS</div>
+          <div class="channels-list" id="radio-channels-container">
+            <div class="channel-card active">
+              <div class="channel-head">
+                <span>● CHANNEL 16</span>
+                <span class="status-tag green">MONITORING</span>
+              </div>
+              <div class="channel-body">
+                MV ATLAS FORTUNE: SECURITE SECURITE - heavy weather advisory, Sector 2-Bravo
+              </div>
+              <div class="channel-time">00:02Z</div>
+            </div>
+
+            <div class="channel-card">
+              <div class="channel-head">
+                <span>● CHANNEL 06</span>
+                <span class="status-tag green">ACTIVE</span>
+              </div>
+              <div class="channel-body">
+                ALPHA ACTUAL: Request SITREP on V002 contact. Over.
+              </div>
+              <div class="channel-time">01:04Z</div>
+            </div>
+
+            <div class="channel-card">
+              <div class="channel-head">
+                <span>● CRYPTO NET 1</span>
+                <span class="status-tag green">ACTIVE</span>
+              </div>
+              <div class="channel-body">
+                [ENCRYPTED] MARCOM relay: additional ASW asset en route ETA 04:30Z.
+              </div>
+              <div class="channel-time">00:58Z</div>
+            </div>
+
+            <div class="channel-card">
+              <div class="channel-head">
+                <span>● SATCOM UPLINK</span>
+                <span class="status-tag red">DEGRADED</span>
+              </div>
+              <div class="channel-body">
+                Link degraded - atmospheric interference. Retrying...
+              </div>
+              <div class="channel-time">00:51Z</div>
+            </div>
+
+            <div class="channel-card">
+              <div class="channel-head">
+                <span>● HF NAVAL NET</span>
+                <span class="status-tag green">MONITORING</span>
+              </div>
+              <div class="channel-body">
+                NAVEUR broadcast: Exercise POSEIDON BATCH in effect - ROE Charlie.
+              </div>
+              <div class="channel-time">23:45Z</div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Side: Encrypted Message Log -->
+        <section class="message-log-panel">
+          <div class="panel-head-title">MESSAGE LOG</div>
+          <div class="messages-stream-list" id="encrypted-message-log">
+            <!-- Messages populated matching Image #5 -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- VIEW TAB 5: AI COMMAND CENTER CONSOLE                            -->
+    <!-- =============================================================== -->
+    <main id="view-ai-command" class="tab-view-content">
+      <div class="ai-command-wrapper">
+        <div class="ai-command-header">
+          <h2 class="ai-main-title">AI COMMAND CONSOLE &amp; TACTICAL ASSISTANT</h2>
+          <div class="ai-sub-title">POWERED BY ACO NAVAL OPTIMIZER &amp; GPT-NAVAL CORE</div>
+        </div>
+
+        <div class="ai-chat-viewport" id="ai-command-chat-stream">
+          <div class="chat-msg system-msg">
+            <span class="msg-sender">SYSTEM:</span>
+            <div class="msg-content">
+              AEGIS AI Command Terminal initialized. Ask for optimal routing parameters, threat evasion tactics, or vessel intercept analysis.
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-input-bar">
+          <input type="text" id="ai-command-input" placeholder="Type tactical command or route query (e.g. 'Compare ACO vs A* for Malacca Strait')..." autocomplete="off">
+          <button id="btn-send-ai-command" class="cyber-btn sm-cyber-btn primary-cyber-btn">SEND COMMAND</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- 3. SYSTEM FOOTER (threat alerts live only in Threat Intel tab)   -->
+    <!-- =============================================================== -->
+    <div class="aegis-bottom-bar">
+      <footer class="system-status-footer">
+        <div class="status-left">
+          <span class="pill-dot green"></span>
+          <span>SYSTEM NOMINAL</span>
+          <span class="pipe">|</span>
+          <span class="text-amber">SATLINK DEGRADED</span>
+        </div>
+        <div class="status-right">
+          CLASSIFICATION: SECRET // REL TO FVEY // NOFORN
+        </div>
+      </footer>
+    </div>
+
+  </div>
+
+  <!-- Leaflet.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Custom Aegis Application Engine -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
