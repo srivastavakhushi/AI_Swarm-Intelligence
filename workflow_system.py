@@ -29,8 +29,16 @@ Faithfully models the complete UML Activity Diagram from Experiment 4:
 
 import time
 import json
-from datetime import datetime, timezone
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from maritime_environment import MaritimeEnvironment, PORTS
+
+IST = ZoneInfo("Asia/Kolkata")
+
+
+def now_ist(fmt: str) -> str:
+    """Wall-clock time in Indian Standard Time (UTC+5:30)."""
+    return datetime.now(IST).strftime(fmt)
 from aco_engine import AntColonyRouteOptimizer
 from pathfinding import GraphSearchRouter
 import database
@@ -98,7 +106,7 @@ class MaritimeWorkflowSystem:
     def log_event(self, stage: str, actor: str, action: str, details: str):
         """Appends an event to the operational audit log."""
         entry = {
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ"),
+            "timestamp": now_ist("%Y-%m-%d %H:%M:%S IST"),
             "stage": stage,
             "actor": actor,
             "action": action,
@@ -119,7 +127,7 @@ class MaritimeWorkflowSystem:
         - Validate data integrity
         - Update real-time maritime situation
         """
-        now = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+        now = now_ist("%H:%M:%S IST")
         self.data_unavailability_alerts.clear()
 
         for key, info in self.data_sources_status.items():
@@ -453,7 +461,7 @@ class MaritimeWorkflowSystem:
         - Make Route History Available
         """
         self.vessel_info["status"] = "COMPLETED"
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+        now = now_ist("%Y-%m-%d %H:%M:%S IST")
 
         record = {
             "voyage_id": f"VOY-MALACCA-{int(time.time())}",
@@ -487,7 +495,7 @@ class MaritimeWorkflowSystem:
             "system_name": "Maritime Fleet Defense & Risk-Aware Route Optimization System",
             "study_area": "Strait of Malacca & Singapore Strait",
             "algorithm": "Pure Ant Colony Optimization (ACO)",
-            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "exported_at": datetime.now(IST).isoformat(),
             "completed_voyages": self.completed_voyage_records,
             "audit_logs": self.audit_logs
         }
