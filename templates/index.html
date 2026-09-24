@@ -20,15 +20,19 @@
 <body class="aegis-hud-theme">
 
   <!-- ================================================================= -->
-  <!-- 1. SCI-FI AUTHENTICATION PORTAL (LOGIN OVERLAY - MATCHES UI #2)   -->
+  <!-- 1. SCI-FI AUTHENTICATION PORTAL (boot log removed)               -->
   <!-- ================================================================= -->
   <div id="login-overlay" class="login-overlay">
     <div class="login-grid-bg"></div>
     <div class="login-radar-sweep"></div>
-    
+
     <div class="sci-fi-login-split-container">
-      <!-- Left Column: Branding & Terminal Boot Sequence Stream -->
       <div class="login-left-terminal-panel">
+        <div class="hud-corner top-left"></div>
+        <div class="hud-corner top-right"></div>
+        <div class="hud-corner bottom-left"></div>
+        <div class="hud-corner bottom-right"></div>
+
         <div class="terminal-brand-header">
           <div class="cyber-emblem">
             <div class="pulse-ring"></div>
@@ -38,42 +42,11 @@
           <p class="login-subtitle">AI-INTEGRATED COMMAND PLATFORM</p>
         </div>
 
-        <div class="boot-terminal-log-wrapper">
-          <div class="terminal-header-strip">
-            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-            <span class="terminal-title">BOOT_SEQUENCE // ENCLAVE_INIT.LOG</span>
-          </div>
-          <div class="terminal-stream" id="login-terminal-stream">
-            <div class="log-line text-cyan">&gt; AEGIS MARITIME AI PLATFORM v4.1.2</div>
-            <div class="log-line">&gt; Initializing secure enclave...</div>
-            <div class="log-line">&gt; Loading cryptographic modules... <span class="text-emerald">OK</span></div>
-            <div class="log-line">&gt; Connecting to SATCOM relay... <span class="text-emerald">OK</span></div>
-            <div class="log-line">&gt; Syncing SONAR array data feed... <span class="text-emerald">OK</span></div>
-            <div class="log-line">&gt; AI inference engine: <span class="text-emerald">ONLINE</span></div>
-            <div class="log-line">&gt; Classification: <span class="text-amber">SECRET // REL TO FVEY</span></div>
-            <div class="log-line text-emerald">&gt; System ready. Authenticate to continue.</div>
-          </div>
-        </div>
-
-        <div class="terminal-footer-meta">
-          <span>EASTERN MEDITERRANEAN THEATRE</span>
-          <span>CLASSIFIED</span>
-        </div>
-      </div>
-
-      <!-- Right Column: Secure Access Form -->
-      <div class="login-right-form-panel">
-        <div class="hud-corner top-left"></div>
-        <div class="hud-corner top-right"></div>
-        <div class="hud-corner bottom-left"></div>
-        <div class="hud-corner bottom-right"></div>
-
         <div class="secure-access-box">
           <h2 class="secure-access-title">SECURE ACCESS</h2>
           <div class="clearance-req-lbl">AUTHORIZED PERSONNEL ONLY - TS/SCI CLEARANCE REQUIRED</div>
-          <div class="access-timestamp"><span class="ind-dot active"></span> <span id="login-live-time">2026-09-09 16:17:13Z</span></div>
+          <div class="access-timestamp"><span class="ind-dot active"></span> <span id="login-live-time">— IST</span></div>
 
-          <!-- Preset Selection -->
           <div class="role-preset-box mt-3">
             <div class="preset-label">CLEARANCE PRESET:</div>
             <div class="role-presets">
@@ -89,7 +62,6 @@
             </div>
           </div>
 
-          <!-- Login Form -->
           <form id="login-form" class="login-form mt-3">
             <div class="cyber-input-group">
               <label for="login-username">OPERATOR ID</label>
@@ -119,6 +91,11 @@
           <div class="legal-disclaimer-text mt-3">
             Use admin / aegis to access the platform. Unauthorized access is a federal offense under 18 U.S.C. § 1030.
           </div>
+        </div>
+
+        <div class="terminal-footer-meta">
+          <span>EASTERN MEDITERRANEAN THEATRE</span>
+          <span>CLASSIFIED</span>
         </div>
       </div>
     </div>
@@ -212,8 +189,8 @@
         </div>
         
         <div class="utc-clock-box">
-          <div class="clock-time" id="utc-clock-time">11:53:41Z</div>
-          <div class="clock-date" id="utc-clock-date">2026-09-09 UTC</div>
+          <div class="clock-time" id="utc-clock-time">11:53:41 IST</div>
+          <div class="clock-date" id="utc-clock-date">2026-09-09 IST</div>
         </div>
 
         <div class="user-profile-badge">
