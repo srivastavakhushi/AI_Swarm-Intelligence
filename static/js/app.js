@@ -286,14 +286,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. CLOCK & NAVIGATION TAB HANDLERS
   // -------------------------------------------------------------
   function formatIST(now) {
-    // IST is a fixed UTC+5:30 offset (Asia/Kolkata, no daylight saving).
-    const shifted = new Date(now.getTime() + (5 * 60 + 30) * 60 * 1000);
-    const hours = String(shifted.getUTCHours()).padStart(2, '0');
-    const mins = String(shifted.getUTCMinutes()).padStart(2, '0');
-    const secs = String(shifted.getUTCSeconds()).padStart(2, '0');
-    const year = shifted.getUTCFullYear();
-    const month = String(shifted.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(shifted.getUTCDate()).padStart(2, '0');
+    // Asia/Kolkata is a fixed UTC+5:30 offset. Read those fields explicitly
+    // so a UTC clock (hour 14) is shown as 19:30 IST.
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    const parts = {};
+    fmt.formatToParts(now).forEach((part) => {
+      if (part.type !== 'literal') parts[part.type] = part.value;
+    });
+    const hours = parts.hour;
+    const mins = parts.minute;
+    const secs = parts.second;
+    const year = parts.year;
+    const month = parts.month;
+    const day = parts.day;
     return {
       timeStr: `${hours}:${mins}:${secs} IST`,
       dateStr: `${year}-${month}-${day} IST`,
