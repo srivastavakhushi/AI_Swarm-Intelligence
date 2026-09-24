@@ -285,22 +285,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // -------------------------------------------------------------
   // 1. CLOCK & NAVIGATION TAB HANDLERS
   // -------------------------------------------------------------
+  function formatIST(now) {
+    // IST is a fixed UTC+5:30 offset (Asia/Kolkata, no daylight saving).
+    const shifted = new Date(now.getTime() + (5 * 60 + 30) * 60 * 1000);
+    const hours = String(shifted.getUTCHours()).padStart(2, '0');
+    const mins = String(shifted.getUTCMinutes()).padStart(2, '0');
+    const secs = String(shifted.getUTCSeconds()).padStart(2, '0');
+    const year = shifted.getUTCFullYear();
+    const month = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(shifted.getUTCDate()).padStart(2, '0');
+    return {
+      timeStr: `${hours}:${mins}:${secs} IST`,
+      dateStr: `${year}-${month}-${day} IST`,
+      full: `${year}-${month}-${day} ${hours}:${mins}:${secs} IST`
+    };
+  }
+
   function startClock() {
     function updateClock() {
-      const now = new Date();
-      const hours = String(now.getUTCHours()).padStart(2, '0');
-      const mins = String(now.getUTCMinutes()).padStart(2, '0');
-      const secs = String(now.getUTCSeconds()).padStart(2, '0');
-      const timeStr = `${hours}:${mins}:${secs}Z`;
-      
-      const year = now.getUTCFullYear();
-      const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(now.getUTCDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day} UTC`;
-
-      if (dom.utcClockTime) dom.utcClockTime.textContent = timeStr;
-      if (dom.utcClockDate) dom.utcClockDate.textContent = dateStr;
-      if (dom.loginLiveTime) dom.loginLiveTime.textContent = `${year}-${month}-${day} ${hours}:${mins}:${secs}Z`;
+      const ist = formatIST(new Date());
+      if (dom.utcClockTime) dom.utcClockTime.textContent = ist.timeStr;
+      if (dom.utcClockDate) dom.utcClockDate.textContent = ist.dateStr;
+      if (dom.loginLiveTime) dom.loginLiveTime.textContent = ist.full;
     }
     updateClock();
     setInterval(updateClock, 1000);
