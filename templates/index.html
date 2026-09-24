@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AEGIS-MARITIME // AI-INTEGRATED COMMAND PLATFORM</title>
+  <title>MARINETRACK // Fleet Commander</title>
   <meta name="description" content="Autonomous Maritime Fleet Defense and Risk-Aware Route Optimization System powered by Ant Colony Optimization (ACO), A*, Dijkstra, and threat intelligence.">
   
   <!-- Sci-Fi Tactical Google Fonts -->
@@ -128,13 +128,24 @@
   <!-- ================================================================= -->
   <!-- 2. MAIN AEGIS TACTICAL COMMAND PLATFORM UI                       -->
   <!-- ================================================================= -->
-  <div id="app-container" class="app-container hidden">
+  <div id="app-container" class="app-container commander-home hidden">
     
     <!-- Top Cybernetic Header Navigation -->
     <header class="aegis-header">
-      <div class="header-left-brand">
+      <div class="header-left-brand aegis-brand">
         <h1 class="brand-title">AEGIS-MARITIME</h1>
         <span class="brand-sub">AI-INTEGRATED COMMAND PLATFORM</span>
+      </div>
+      <div class="header-left-brand marine-brand">
+        <span class="marine-logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 3 L21 19 H3 Z"></path>
+          </svg>
+        </span>
+        <span class="marine-logo-text">MARINETRACK</span>
+        <span class="marine-live"><span class="marine-live-dot"></span>LIVE</span>
+        <span class="marine-divider"></span>
+        <span class="marine-corridor">LIVE TRACKING &nbsp;|&nbsp; GLOBAL MARITIME SURVEILLANCE — STRAIT OF MALACCA CORRIDOR</span>
       </div>
 
       <!-- Main Navigation Tabs Bar (5 View Tabs matching UI) -->
@@ -213,6 +224,7 @@
           </div>
         </div>
 
+        <div class="marine-projection">ZOOM 100% — EQUIRECTANGULAR PROJECTION</div>
         <div class="header-action-btns">
           <button id="btn-logout" class="cyber-btn sm-cyber-btn danger-cyber-btn">LOGOUT</button>
         </div>
@@ -223,8 +235,61 @@
     <!-- VIEW TAB 1: TACTICAL COMMAND DASHBOARD (MATCHES UI #1)           -->
     <!-- =============================================================== -->
     <main id="view-tactical" class="tab-view-content active">
-      <div class="map-stage">
+      <div class="marine-home">
+        <aside class="marine-sidebar" id="marine-sidebar">
+          <div class="marine-sidebar-kicker">REAL-TIME VESSEL TRACKING SYSTEM</div>
+
+          <section class="marine-field">
+            <div class="marine-field-label">
+              <span class="marine-status-dot"></span>VESSEL STATUS
+            </div>
+            <div class="marine-field-value gold" id="home-vessel-status">AT PORT — AWAITING DEPARTURE</div>
+          </section>
+
+          <section class="marine-field">
+            <div class="marine-field-label">TRACKING REFERENCE</div>
+            <div class="marine-field-value" id="home-tracking-ref">PNG-SIN-2024-08477</div>
+          </section>
+
+          <section class="marine-field">
+            <div class="marine-field-label">VESSEL NAME</div>
+            <div class="marine-field-value" id="home-vessel-name">MV SENTINEL GUARDIAN</div>
+          </section>
+
+          <section class="marine-field">
+            <div class="marine-field-label">VESSEL TYPE</div>
+            <div class="marine-field-value dim" id="home-vessel-type">Guided Escort &amp; Cargo Vessel</div>
+          </section>
+
+          <section class="marine-field">
+            <div class="marine-field-label">CALL SIGN</div>
+            <div class="marine-field-value dim" id="home-vessel-imo">9V-SG44</div>
+          </section>
+
+          <section class="marine-field">
+            <div class="marine-field-label">FLAG</div>
+            <div class="marine-field-value dim" id="home-vessel-flag">Singapore</div>
+          </section>
+
+          <section class="marine-field">
+            <div class="marine-field-label">CURRENT POSITION</div>
+            <div class="marine-field-value position" id="home-vessel-position">
+              <span class="marine-status-dot"></span>Penang (Malaysia)
+            </div>
+          </section>
+
+          <div class="marine-sidebar-foot">MARINETRACK GLOBAL LOGISTICS NETWORK v.4.2.1.1</div>
+        </aside>
+
+        <div class="map-stage">
         <div id="maritime-map" class="maritime-map-canvas"></div>
+
+        <div class="marine-legend">
+          <div class="marine-legend-title">MAP LEGEND</div>
+          <div class="marine-legend-row"><span class="lg-dot cyan"></span>Vessel — At Port</div>
+          <div class="marine-legend-row"><span class="lg-line dashed"></span>Planned Route</div>
+          <div class="marine-legend-row"><span class="lg-dot gold"></span>Destination Port</div>
+        </div>
 
         <!-- Floating route console -->
         <div class="map-overlay route-console">
@@ -428,6 +493,7 @@
             </div>
           </div>
         </aside>
+      </div>
       </div>
     </main>
 

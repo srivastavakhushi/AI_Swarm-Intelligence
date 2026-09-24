@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dijkstraRoute: null,
       vessel: null,
       contacts: null,
-      ports: null
+      ports: null,
+      homeTrack: null
     },
     portsData: [],
     incidentsData: [],
@@ -322,8 +323,15 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
+        if (dom.appContainer) {
+          dom.appContainer.classList.toggle('commander-home', targetTab === 'tactical');
+        }
+
         if (targetTab === 'tactical' && state.map) {
-          setTimeout(() => state.map.invalidateSize(), 100);
+          setTimeout(() => {
+            state.map.invalidateSize();
+            fitMalaccaView();
+          }, 100);
         }
       });
     });
@@ -631,9 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
       maxBoundsViscosity: 0.85
     });
 
-    L.control.zoom({ position: 'bottomright' }).addTo(state.map);
+    L.control.zoom({ position: 'topright' }).addTo(state.map);
 
-    // Esri Ocean basemap: nautical bathymetry, no API key required
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri — GEBCO, NOAA, Ocean Basemap',
       maxZoom: 13
@@ -654,9 +661,13 @@ document.addEventListener('DOMContentLoaded', () => {
     state.layers.contacts = L.layerGroup().addTo(state.map);
     state.layers.ports = L.layerGroup().addTo(state.map);
     state.layers.vessel = L.layerGroup().addTo(state.map);
+    state.layers.homeTrack = L.layerGroup().addTo(state.map);
 
     window.addEventListener('resize', () => {
-      if (state.map) state.map.invalidateSize();
+      if (state.map) {
+        state.map.invalidateSize();
+        if (state.activeTab === 'tactical') fitMalaccaView();
+      }
     });
 
     fitMalaccaView();
@@ -703,12 +714,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function addMapLabel(latlng, html, className, iconSize, iconAnchor) {
+    return L.marker(latlng, {
+      icon: L.divIcon({
+        className,
+        html,
+        iconSize,
+        iconAnchor
+      }),
+      interactive: false,
+      keyboard: false
+    });
+  }
+
+  function formatCoord(lat, lon) {
+    const ns = lat >= 0 ? 'N' : 'S';
+    const ew = lon >= 0 ? 'E' : 'W';
+    return `${Math.abs(lat).toFixed(2)}° ${ns} · ${Math.abs(lon).toFixed(2)}° ${ew}`;
+  }
+
+  function renderPlannedCorridor() {
+    if (!state.layers.homeTrack) return;
+    state.layers.homeTrack.clearLayers();
+
+    addMapLabel([4.35, 98.15], '<div class="ocean-label">ANDAMAN SEA</div>', 'home-label-wrap', [140, 16], [70, 8])
+      .addTo(state.layers.homeTrack);
+    addMapLabel([2.55, 101.15], '<div class="ocean-label">STRAIT OF MALACCA</div>', 'home-label-wrap', [180, 16], [90, 8])
+      .addTo(state.layers.homeTrack);
+    addMapLabel([2.35, 104.15], '<div class="ocean-label">SOUTH CHINA SEA</div>', 'home-label-wrap', [160, 16], [80, 8])
+      .addTo(state.layers.homeTrack);
+
+    const origin = state.portsData.find(p => p.name === state.originPort);
+    const dest = state.portsData.find(p => p.name === state.destPort);
+    if (!origin || !dest) return;
+
+    L.polyline([[origin.lat, origin.lon], [dest.lat, dest.lon]], {
+      color: '#38bdf8',
+      weight: 1.6,
+      opacity: 0.8,
+      dashArray: '5 8',
+      lineCap: 'round',
+      interactive: false
+    }).addTo(state.layers.homeTrack);
+  }
+
   async function loadPorts() {
     try {
       const resp = await fetch('/api/ports');
       const data = await resp.json();
       state.portsData = data.ports || [];
       renderPorts();
+      renderPlannedCorridor();
     } catch (err) {
       console.error('Ports error:', err);
     }
@@ -721,21 +777,43 @@ document.addEventListener('DOMContentLoaded', () => {
       const isOrigin = p.name === state.originPort;
       const isDest = p.name === state.destPort;
       const isSelected = isOrigin || isDest;
-      const role = isOrigin ? 'ORIGIN' : (isDest ? 'DEST' : '');
       const shortName = p.name.split('(')[0].trim().toUpperCase();
       const classes = ['port-marker'];
       if (isOrigin) classes.push('origin', 'selected');
       if (isDest) classes.push('dest', 'selected');
 
-      const icon = L.divIcon({
-        className: 'custom-port-marker',
-        html: `
-          <div class="${classes.join(' ')}">
-            <div class="port-marker-pulse"></div>
-            <div class="port-marker-core"></div>
-            ${isSelected ? `<div class="port-marker-label">${role}<br>${shortName}</div>` : ''}
+      const originCard = `
+        <div class="origin-pin">
+          <div class="origin-pulse"></div>
+          <div class="origin-core"></div>
+          <div class="origin-card">
+            <div class="origin-card-kicker">CURRENT LOCATION</div>
+            <div class="origin-card-title">${shortName}</div>
+            <div class="origin-card-meta">${p.name} — Vessel at berth</div>
+            <div class="origin-card-coords">${formatCoord(p.lat, p.lon)} · 0.00 kn</div>
           </div>
-        `,
+        </div>
+      `;
+      const destCard = `
+        <div class="dest-pin">
+          <div class="dest-core"></div>
+          <div class="dest-label">
+            <div class="dest-name">${shortName}</div>
+            <div class="dest-sub">${p.name}</div>
+            <div class="dest-tag">DESTINATION</div>
+          </div>
+        </div>
+      `;
+      const defaultPin = `
+        <div class="${classes.join(' ')}">
+          <div class="port-marker-pulse"></div>
+          <div class="port-marker-core"></div>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        className: isOrigin ? 'home-origin-wrap' : (isDest ? 'home-dest-wrap' : 'custom-port-marker'),
+        html: isOrigin ? originCard : (isDest ? destCard : defaultPin),
         iconSize: [28, 28],
         iconAnchor: [14, 14]
       });
@@ -753,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.originPort = dom.selectOrigin.value;
     state.destPort = dom.selectDest.value;
     renderPorts();
+    renderPlannedCorridor();
 
     if (!state.map || !state.portsData.length) return;
     const origin = state.portsData.find(p => p.name === state.originPort);
@@ -1274,6 +1353,37 @@ document.addEventListener('DOMContentLoaded', () => {
       dom.sidebarStatusBadge.textContent = v.status;
       if (v.status === 'EN_ROUTE') dom.sidebarStatusBadge.className = 'text-emerald';
       else dom.sidebarStatusBadge.className = 'text-cyan';
+    }
+
+    const homeStatus = document.getElementById('home-vessel-status');
+    const homeName = document.getElementById('home-vessel-name');
+    const homeType = document.getElementById('home-vessel-type');
+    const homeCallsign = document.getElementById('home-vessel-imo');
+    const homePosition = document.getElementById('home-vessel-position');
+    const homeRef = document.getElementById('home-tracking-ref');
+    const statusLabel = v.status === 'MOORED'
+      ? 'AT PORT — AWAITING DEPARTURE'
+      : v.status === 'EN_ROUTE'
+        ? 'EN ROUTE — TRANSIT ACTIVE'
+        : v.status === 'COMPLETED'
+          ? 'ARRIVED — VOYAGE COMPLETE'
+          : v.status.replaceAll('_', ' ');
+    if (homeStatus) homeStatus.textContent = statusLabel;
+    if (homeName) homeName.textContent = (v.name || 'MV SENTINEL GUARDIAN').toUpperCase();
+    if (homeType) homeType.textContent = v.type || 'Guided Escort & Cargo Vessel';
+    if (homeCallsign) homeCallsign.textContent = v.callsign || '9V-SG44';
+    if (homePosition) {
+      const posLabel = v.status === 'MOORED'
+        ? (v.origin_port || 'Penang (Malaysia)')
+        : v.status === 'COMPLETED'
+          ? (v.destination_port || 'Singapore (SE Gateway)')
+          : formatCoord(lat, lon);
+      homePosition.innerHTML = `<span class="marine-status-dot"></span>${posLabel}`;
+    }
+    if (homeRef) {
+      const originCode = (v.origin_port || 'PNG').split(' ')[0].slice(0, 3).toUpperCase();
+      const destCode = (v.destination_port || 'SIN').split(' ')[0].slice(0, 3).toUpperCase();
+      homeRef.textContent = `${originCode}-${destCode}-2024-08477`;
     }
 
     renderVesselMarker(lat, lon, v.name, v.status);
