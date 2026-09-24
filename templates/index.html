@@ -20,50 +20,86 @@
 <body class="aegis-hud-theme">
 
   <!-- ================================================================= -->
-  <!-- 1. LOGIN — dark card matching the Helm reference layout          -->
+  <!-- 1. SCI-FI AUTHENTICATION PORTAL (boot log removed)               -->
   <!-- ================================================================= -->
   <div id="login-overlay" class="login-overlay">
-    <div class="login-ist-clock" id="login-live-time">— IST</div>
+    <div class="login-grid-bg"></div>
+    <div class="login-radar-sweep"></div>
 
-    <div class="login-card">
-      <div class="login-brand">
-        <span class="login-anchor" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="4.8" r="1.7"></circle>
-            <path d="M12 6.8V19"></path>
-            <path d="M7.6 10.2h8.8"></path>
-            <path d="M12 19c-3.6 0-5.8-2.4-6.4-5.2"></path>
-            <path d="M12 19c3.6 0 5.8-2.4 6.4-5.2"></path>
-          </svg>
-        </span>
-        <span class="login-wordmark">Helm</span>
-      </div>
-      <p class="login-tagline">Turning Compliance into Advantage.</p>
-
-      <form id="login-form" class="login-form">
-        <div class="login-field">
-          <label for="login-username">Email</label>
-          <input type="text" id="login-username" value="commander" required placeholder="captain@maritime.com" autocomplete="username">
+    <div class="sci-fi-login-split-container">
+      <div class="login-left-terminal-panel">
+        <div class="terminal-brand-header">
+          <div class="cyber-emblem">
+            <div class="pulse-ring"></div>
+            <span class="emblem-symbol">🛡️</span>
+          </div>
+          <h1 class="login-title">AEGIS-MARITIME</h1>
+          <p class="login-subtitle">AI-INTEGRATED COMMAND PLATFORM</p>
         </div>
 
-        <div class="login-field">
-          <label for="login-password">Password</label>
-          <input type="password" id="login-password" value="test123" required placeholder="Enter password" autocomplete="current-password">
+        <div class="terminal-footer-meta">
+          <span>EASTERN MEDITERRANEAN THEATRE</span>
+          <span>CLASSIFIED</span>
         </div>
-
-        <div id="login-error-banner" class="login-error-banner hidden"></div>
-
-        <button type="submit" id="btn-login-submit" class="login-submit">Login</button>
-      </form>
-
-      <div class="login-roles" aria-label="Demo accounts">
-        <button type="button" class="preset-btn active" data-user="commander" data-pwd="test123">Fleet Commander</button>
-        <button type="button" class="preset-btn" data-user="crew" data-pwd="test123">Vessel Crew</button>
-        <button type="button" class="preset-btn" data-user="admin" data-pwd="test123">System Admin</button>
       </div>
 
-      <p class="login-footnote">From compliance reports to real-time savings.</p>
-      <button id="btn-login-unlock" type="button" class="login-unlock">Reset account lockout</button>
+      <div class="login-right-form-panel">
+        <div class="hud-corner top-left"></div>
+        <div class="hud-corner top-right"></div>
+        <div class="hud-corner bottom-left"></div>
+        <div class="hud-corner bottom-right"></div>
+
+        <div class="secure-access-box">
+          <h2 class="secure-access-title">SECURE ACCESS</h2>
+          <div class="clearance-req-lbl">AUTHORIZED PERSONNEL ONLY - TS/SCI CLEARANCE REQUIRED</div>
+          <div class="access-timestamp"><span class="ind-dot active"></span> <span id="login-live-time">— IST</span></div>
+
+          <div class="role-preset-box mt-3">
+            <div class="preset-label">CLEARANCE PRESET:</div>
+            <div class="role-presets">
+              <button type="button" class="preset-btn active" data-user="commander" data-pwd="test123">
+                <span class="preset-role">Fleet Commander</span>
+              </button>
+              <button type="button" class="preset-btn" data-user="crew" data-pwd="test123">
+                <span class="preset-role">Vessel Crew</span>
+              </button>
+              <button type="button" class="preset-btn" data-user="admin" data-pwd="test123">
+                <span class="preset-role">System Admin</span>
+              </button>
+            </div>
+          </div>
+
+          <form id="login-form" class="login-form mt-3">
+            <div class="cyber-input-group">
+              <label for="login-username">OPERATOR ID</label>
+              <div class="input-wrapper">
+                <input type="text" id="login-username" value="commander" required placeholder="Enter operator ID" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="cyber-input-group">
+              <label for="login-password">AUTH TOKEN</label>
+              <div class="input-wrapper">
+                <input type="password" id="login-password" value="test123" required placeholder="Enter auth token">
+              </div>
+            </div>
+
+            <div id="login-error-banner" class="login-error-banner hidden"></div>
+
+            <button type="submit" id="btn-login-submit" class="cyber-btn primary-cyber-btn full-width mt-3">
+              <span class="cyber-btn-text">AUTHENTICATE</span>
+            </button>
+          </form>
+
+          <div class="lockout-recovery-box mt-3 text-center">
+            <button id="btn-login-unlock" type="button" class="text-btn text-cyan text-xs">Use admin / aegis to reset lockout via SQLite</button>
+          </div>
+
+          <div class="legal-disclaimer-text mt-3">
+            Use admin / aegis to access the platform. Unauthorized access is a federal offense under 18 U.S.C. § 1030.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
