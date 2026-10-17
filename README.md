@@ -33,6 +33,28 @@ Secure role-based access control (RBAC) supporting Fleet Commander, Vessel Crew,
 
 ---
 
+
+---
+
+## Base Model & Prototype Visualizations (Experiment 4 Foundation)
+
+These algorithmic visualizations represent the original foundation developed in the base model:
+
+### 1. Pure ACO Swarm Route Optimization & Convergence Curve
+Autonomous Ant Colony Optimization (ACO) pathfinding displaying the primary safe corridor (395.3 NM), alternate route (404.1 NM), and iterative composite route cost minimization over 35 iterations.
+
+![ACO Malacca Prototype](aco_malacca_prototype.png)
+
+### 2. Machine Learning Piracy Risk Classifier & Confusion Matrix
+Random Forest classification predicting maritime cell risk levels from historical incident data, showing the model-predicted risk heatmap alongside the test-set confusion matrix (843 true risky, 93 true safe).
+
+![ML Risk Classifier Prototype](ml_risk_prototype.png)
+
+### 3. Risk-Aware Route Benchmark (ACO vs. A* vs. Dijkstra)
+Candidate route comparison across real-data risk heatmaps evaluating shortest path (Dijkstra), heuristic risk penalty (A*), and probabilistic swarm optimization (ACO).
+
+![Route Comparison](route_comparison.png)
+
 ## Project Architecture & Contributions
 
 This project was developed collaboratively in two major phases:
