@@ -1,47 +1,42 @@
-# AI Swarm Intelligence: Maritime Fleet Defense & Route Optimization
+# AEGIS: Maritime Fleet Defense & Pure ACO Route Optimizer
 
-Autonomous maritime fleet defense and dynamic route planning platform for high-risk maritime corridors (Strait of Malacca). The system combines Ant Colony Optimization (ACO), A* Search, and Dijkstra pathfinding with machine learning risk classification, real-time threat monitoring, and fleet commander tactical control.
+### Experiment 4 Prototype • Autonomous Maritime Swarm Intelligence & Risk-Aware Navigation
 
----
+Autonomous maritime fleet defense and dynamic route planning system for high-risk maritime corridors (Strait of Malacca). This project implements the core foundational architecture and all swimlanes from the **Software Engineering Experiment 4 UML Activity Diagram**:
 
-## UI Previews & Tactical Screenshots
-
-### 1. Tactical Fleet Commander Dashboard
-Live satellite-tracked maritime surveillance across the Strait of Malacca, displaying real-time vessel telemetry, waypoint corridors, and active piracy incident clusters.
-
-![Tactical Fleet Commander Dashboard](docs/screenshots/dashboard_overview.png)
-
-### 2. Swarm Intelligence Route Optimization (ACO vs. Baselines)
-Ant Colony Optimization constructs water-only candidate routes avoiding land masses, restricted traffic separation schemes (TSS), and piracy hotspots using synthetic pheromone concentration and heuristic desirability.
-
-![ACO Swarm Route Optimization](docs/screenshots/route_optimization.png)
-
-### 3. Quantitative Multi-Algorithm Decision Matrix
-Direct performance benchmark comparing Ant Colony Optimization (ACO), A* (Risk-Aware), and Dijkstra (Shortest Path) across Nautical Distance, Estimated Transit Time, Mean Risk, Peak Threat Level, and Total Cost Score.
-
-![Algorithm Comparison Matrix](docs/screenshots/algorithm_comparison_matrix.png)
-
-### 4. Real-Time Threat Intelligence Center
-Live sensor correlation combining acoustic, electronic, radar, AIS spoofing, and port intelligence feeds with real-time AI confidence scores.
-
-![Threat Intelligence Center](docs/screenshots/threat_intelligence.png)
-
-### 5. Multi-Role Authentication & Access Control
-Secure role-based access control (RBAC) supporting Fleet Commander, Vessel Crew, and System Administrator privileges with automated security logging.
-
-![Login Screen](docs/screenshots/login_screen.png)
+- **External Maritime Data Feeds**: Real-time integration of historical piracy intelligence (996 incidents), Southwest Monsoon current drift, bathymetric navigational shoals, and restricted TSS chokepoints.
+- **Multi-Role Authentication & Security**: Role-based dispatch (Fleet Commander, Vessel Crew, System Admin) with a 3-attempt account lockout mechanism.
+- **Threat Monitoring & AI Risk Analysis**: Real-time threat zone detection and piracy cluster alerts.
+- **Pure Ant Colony Optimization (ACO) Engine**: Probabilistic ant swarm path construction with synthetic pheromone evaporation and heuristic desirability.
+- **Fleet Commander Review Loop**: Tactical route approval and dynamic recalculation trigger.
+- **Vessel Crew Voyage Transit**: Step-by-step route transit simulation and deviation reporting.
+- **Operational Audit Logging**: Complete immutable event logging and JSON record export.
 
 ---
 
+## Base Model Screenshots & UI Previews
+
+### 1. Interactive Command Dashboard & ACO Route Synthesis
+The primary base dashboard showcasing the 7-stage UML Activity Diagram progress stepper, external telemetry feeds, threat detection alerts, and the synthesized water-navigable ACO safe route on the interactive maritime map.
+
+![Base Model Dashboard](docs/screenshots/base_dashboard.png)
+
+### 2. Ant Colony Optimization (ACO) Parameter Tuner & Convergence
+Interactive tuner interface allowing real-time parameter configuration (Ant Population $N_{\text{ants}}$, Max Iterations, Pheromone Sensitivity $\alpha$, Heuristic Desirability $\beta$, Evaporation Rate $\rho$) along with live Colony Route Cost Convergence curves.
+
+![ACO Parameter Tuner](docs/screenshots/base_aco_tuner.png)
+
+### 3. Operational Audit & Event Logging
+Immutable audit log recording every automated transition, ACO candidate evaluations, risk score computations, and commander approvals.
+
+![Base Operational Audit Logs](docs/screenshots/base_audit_logs.png)
 
 ---
 
-## Base Model & Prototype Visualizations (Experiment 4 Foundation)
+## Algorithmic Prototype & Machine Learning Visualizations
 
-These algorithmic visualizations represent the original foundation developed in the base model:
-
-### 1. Pure ACO Swarm Route Optimization & Convergence Curve
-Autonomous Ant Colony Optimization (ACO) pathfinding displaying the primary safe corridor (395.3 NM), alternate route (404.1 NM), and iterative composite route cost minimization over 35 iterations.
+### 1. Pure ACO Maritime Route Optimization & Cost Minimization
+Autonomous Ant Colony Optimization pathfinding across the Strait of Malacca displaying the primary safe corridor (395.3 NM), alternate route (404.1 NM), and iterative composite route cost minimization over 35 iterations.
 
 ![ACO Malacca Prototype](aco_malacca_prototype.png)
 
@@ -50,84 +45,49 @@ Random Forest classification predicting maritime cell risk levels from historica
 
 ![ML Risk Classifier Prototype](ml_risk_prototype.png)
 
-### 3. Risk-Aware Route Benchmark (ACO vs. A* vs. Dijkstra)
+### 3. Multi-Algorithm Candidate Route Evaluation
 Candidate route comparison across real-data risk heatmaps evaluating shortest path (Dijkstra), heuristic risk penalty (A*), and probabilistic swarm optimization (ACO).
 
 ![Route Comparison](route_comparison.png)
 
-## Project Architecture & Contributions
+---
 
-This project was developed collaboratively in two major phases:
+## Repository Structure & Core Modules
 
-- **Base Architecture & Foundation (Manya Nayak)**:
-  - Designed the core Ant Colony Optimization (ACO) probabilistic transition and pheromone update engine (`aco_engine.py`).
-  - Implemented the Random Forest ML Piracy Risk Classifier (`risk_classifier_ai.py`) trained on historical incident datasets (`pirate_attacks.csv`).
-  - Built the discrete coordinate-to-nautical grid mapping and maritime simulation environment (`maritime_environment.py`).
-  - Developed the complete system workflow state machine (`workflow_system.py`) and base interactive web application (`app.py`).
-  - Authored the core prototype simulation pipelines (`run_prototype.py`, `ai.py`).
-
-- **Dashboard Enhancements & Modernization (Khushi Srivastava)**:
-  - Refactored server architecture to FastAPI (`app/main.py`) with SQLite credential management (`database.py`).
-  - Enhanced water-only pathfinding algorithms (`pathfinding.py`) and integrated global land masking.
-  - Redesigned and modernised the frontend UI into the MARINETRACK dark command aesthetic (`static/css/style.css`, `static/js/app.js`, `templates/index.html`).
-  - Configured local deployment environments and documentation.
+| File | Description |
+| :--- | :--- |
+| [`aco_engine.py`](aco_engine.py) | Pure Ant Colony Optimization (ACO) probabilistic engine and pheromone update rules |
+| [`risk_classifier_ai.py`](risk_classifier_ai.py) | Random Forest ML piracy risk model trained on historical incident data |
+| [`maritime_environment.py`](maritime_environment.py) | Discrete coordinate grid, nautical distance calculations, and hazard maps |
+| [`workflow_system.py`](workflow_system.py) | State-machine workflow engine coordinating all Experiment 4 swimlanes |
+| [`app.py`](app.py) | Flask web backend serving the interactive command dashboard |
+| [`pirate_attacks.csv`](pirate_attacks.csv) | Historical maritime piracy incidents dataset |
+| [`operational_records.json`](operational_records.json) | Exported audit telemetry and completed voyage records |
+| [`SE_EXP4_N068.pdf`](SE_EXP4_N068.pdf) | Software Engineering Experiment 4 academic lab report (Roll No: N068) |
+| [`run_prototype.py`](run_prototype.py) | Standalone end-to-end command-line simulation pipeline |
+| [`ai.py`](ai.py) | Standalone ACO routing and risk evaluation prototype |
+| [`templates/`](templates/) | HTML templates for the base web application |
+| [`static/`](static/) | CSS styling and JavaScript logic for the base web application |
 
 ---
 
-## Prerequisites
+## Installation & Running the Base Application
 
-- Python 3.10 or newer
-- Git
-
-Verify Python installation:
+### 1. Environment Setup
 
 ```bash
-python --version
-# Or python3 --version
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install required dependencies
+pip install flask numpy pandas scikit-learn matplotlib
 ```
 
----
-
-## Installation & Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/srivastavakhushi/AI_Swarm-Intelligence.git
-   cd AI_Swarm-Intelligence
-   ```
-
-2. **Create and activate a virtual environment:**
-   - **macOS / Linux:**
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
-   - **Windows (PowerShell):**
-     ```powershell
-     python -m venv .venv
-     .\.venv\Scripts\Activate.ps1
-     ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install --upgrade pip
-   pip install fastapi uvicorn numpy pandas global-land-mask matplotlib scikit-learn
-   ```
-
----
-
-## Running the Dashboard
-
-Start the FastAPI application with Uvicorn:
+### 2. Run the Web Dashboard
 
 ```bash
-python -m uvicorn app.main:app --reload --port 5050
-```
-
-Alternatively, run:
-
-```bash
-python -m app.main
+python app.py
 ```
 
 Open your browser and navigate to:
@@ -135,21 +95,9 @@ Open your browser and navigate to:
 http://127.0.0.1:5050
 ```
 
-### Sign-in Credentials
+### 3. Run Standalone Prototypes
 
-Default accounts are auto-initialized in `users.db`:
-
-| Operator ID | Password | Role | Access Level |
-| :--- | :--- | :--- | :--- |
-| `commander` | `test123` | Fleet Commander | Full Tactical Approval & Recalculation |
-| `crew` | `test123` | Vessel Crew | Transit Monitoring & Deviation Reports |
-| `admin` | `test123` | System Administrator | Database & Account Unlock Management |
-
----
-
-## Standalone Prototypes & Algorithms
-
-- **Terminal End-to-End Simulation Pipeline:**
+- **Complete Workflow Pipeline with Route Plots:**
   ```bash
   python run_prototype.py
   ```
@@ -159,7 +107,7 @@ Default accounts are auto-initialized in `users.db`:
   python risk_classifier_ai.py
   ```
 
-- **Standalone Swarm Routing Engine:**
+- **Standalone ACO Route Optimization:**
   ```bash
   python ai.py
   ```
