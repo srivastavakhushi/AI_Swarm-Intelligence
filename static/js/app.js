@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isAuthenticated: false,
     currentRole: 'Fleet Commander',
     currentUser: 'commander',
-    activeTab: 'tactical',
+    activeTab: 'vessel-position',
     activeRightTab: 'ai',
     originPort: 'Penang (Malaysia)',
     destPort: 'Singapore (SE Gateway)',
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedRouteType: 'primary',
     isApproved: false,
     vesselStatus: 'MOORED',
-    selectedContactId: 'KNYAZ-VOLKONSKY',
+    selectedContactId: 'VESSEL-001',
     transitTimer: null,
     isAutoTransiting: false,
     map: null,
@@ -40,11 +40,33 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     portsData: [],
     incidentsData: [],
-    zonesData: []
+    zonesData: [],
+
+    // Fleet Vessels (Vessel Crew & Fleet Commander Live Sync)
+    fleetVessels: [],
+    selectedVesselId: 'VESSEL-001',
+    crewMap: null,
+    crewLayers: {
+      vessels: null,
+      trails: null,
+      gaTour: null
+    },
+    isAutoSimulating: false,
+    simInterval: null,
+    fleetPollInterval: null,
+
+    // AI Syllabus Modules (Units 2 & 6)
+    expertAdvisory: null,
+    kbRules: [],
+    gaResult: null,
+    gaWaypoints: [],
+    selectedGAWaypointIds: new Set(),
+    minimaxState: null,
+    minimaxAutoInterval: null
   };
 
-  // Tracked Contacts List (Matching Screenshot #1 & #4)
-  const TRACKED_CONTACTS = [
+  // Tracked Contacts List (Dynamically updated from /api/fleet/vessels)
+  let TRACKED_CONTACTS = [
     {
       id: 'V002',
       name: 'SSK-417',
@@ -275,11 +297,129 @@ document.addEventListener('DOMContentLoaded', () => {
     sortBtnThreat: document.getElementById('sort-btn-threat'),
     sortBtnSpeed: document.getElementById('sort-btn-speed'),
     
+    threatCardsList: document.getElementById('threat-intel-cards-list'),
+    threatFilterBtns: document.querySelectorAll('.intel-filter-buttons .filter-btn'),
+    
+    vesselTableBody: document.getElementById('vessel-log-table-body'),
+    sortBtnId: document.getElementById('sort-btn-id'),
+    sortBtnThreat: document.getElementById('sort-btn-threat'),
+    sortBtnSpeed: document.getElementById('sort-btn-speed'),
+    
     encryptedMessageLog: document.getElementById('encrypted-message-log'),
     
     aiCommandInput: document.getElementById('ai-command-input'),
     btnSendAiCommand: document.getElementById('btn-send-ai-command'),
-    aiChatStream: document.getElementById('ai-command-chat-stream')
+    aiChatStream: document.getElementById('ai-command-chat-stream'),
+
+    // Role Switcher
+    btnRoleCommander: document.getElementById('btn-role-commander'),
+    btnRoleCrew: document.getElementById('btn-role-crew'),
+
+    // Vessel Position Cockpit (Crew)
+    crewVesselSelect: document.getElementById('crew-vessel-select'),
+    crewCoordDisplay: document.getElementById('crew-coord-display'),
+    crewCoordDecimal: document.getElementById('crew-coord-decimal'),
+    crewSpeedDisplay: document.getElementById('crew-speed-display'),
+    crewSpeedBar: document.getElementById('crew-speed-bar'),
+    crewHeadingDisplay: document.getElementById('crew-heading-display'),
+    crewCompassBearing: document.getElementById('crew-compass-bearing'),
+    crewVesselStatus: document.getElementById('crew-vessel-status'),
+    crewVesselCallsign: document.getElementById('crew-vessel-callsign'),
+    crewVesselRoute: document.getElementById('crew-vessel-route'),
+    crewVesselMmsi: document.getElementById('crew-vessel-mmsi'),
+    crewVesselDepth: document.getElementById('crew-vessel-depth'),
+    crewInputSpeed: document.getElementById('crew-input-speed'),
+    crewSpeedValLabel: document.getElementById('crew-speed-val-label'),
+    crewInputHeading: document.getElementById('crew-input-heading'),
+    crewHeadingValLabel: document.getElementById('crew-heading-val-label'),
+    btnCrewApplyHelm: document.getElementById('btn-crew-apply-helm'),
+    btnCrewSimStep: document.getElementById('btn-crew-sim-step'),
+    btnCrewSimAuto: document.getElementById('btn-crew-sim-auto'),
+    btnCrewReportDeviation: document.getElementById('btn-crew-report-deviation'),
+    crewFleetTableBody: document.getElementById('crew-fleet-table-body'),
+    crewPillBtns: document.querySelectorAll('.crew-pill-btn'),
+
+    crewCompassNeedle: document.getElementById('crew-compass-needle'),
+    crewCompassBearing: document.getElementById('crew-compass-bearing'),
+
+    // AI Syllabus Unit 6: Maritime Expert System
+    expertVesselSelect: document.getElementById('expert-vessel-select'),
+    btnEvalExpert: document.getElementById('btn-eval-expert'),
+    expertWmTableBody: document.getElementById('expert-wm-table-body'),
+    sbDepth: document.getElementById('sb-depth'),
+    sbDepthVal: document.getElementById('sb-depth-val'),
+    sbSpeed: document.getElementById('sb-speed'),
+    sbSpeedVal: document.getElementById('sb-speed-val'),
+    sbWeather: document.getElementById('sb-weather'),
+    sbWeatherVal: document.getElementById('sb-weather-val'),
+    sbDeviation: document.getElementById('sb-deviation'),
+    sbChokepoint: document.getElementById('sb-chokepoint'),
+    btnEvalSandbox: document.getElementById('btn-eval-sandbox'),
+    expertVerdictCard: document.getElementById('expert-verdict-card'),
+    expertVerdictBadge: document.getElementById('expert-verdict-badge'),
+    expertVerdictRuleId: document.getElementById('expert-verdict-rule-id'),
+    expertVerdictColreg: document.getElementById('expert-verdict-colreg'),
+    expertVerdictHeadline: document.getElementById('expert-verdict-headline'),
+    expertVerdictMessage: document.getElementById('expert-verdict-message'),
+    expertSpecAction: document.getElementById('expert-spec-action'),
+    expertSpecSpeed: document.getElementById('expert-spec-speed'),
+    expertSpecTrim: document.getElementById('expert-spec-trim'),
+    explTabBtns: document.querySelectorAll('.expl-tab-btn'),
+    explPaneWhy: document.getElementById('expl-pane-why'),
+    explPaneHow: document.getElementById('expl-pane-how'),
+    explPaneKb: document.getElementById('expl-pane-kb'),
+    whyPremisesList: document.getElementById('why-premises-list'),
+    whyRationaleText: document.getElementById('why-rationale-text'),
+    whyStandardText: document.getElementById('why-standard-text'),
+    howDerivationList: document.getElementById('how-derivation-list'),
+    kbRulesAccordion: document.getElementById('kb-rules-accordion'),
+    cockpitExpertBadge: document.getElementById('cockpit-expert-badge'),
+    cockpitExpertHeadline: document.getElementById('cockpit-expert-headline'),
+    cockpitExpertAction: document.getElementById('cockpit-expert-action'),
+    btnCockpitRunExpert: document.getElementById('btn-cockpit-run-expert'),
+    btnCockpitExplainExpert: document.getElementById('btn-cockpit-explain-expert'),
+
+    // AI Syllabus Unit 2: Genetic Algorithm
+    btnRunGA: document.getElementById('btn-run-ga'),
+    btnPlotGAMap: document.getElementById('btn-plot-ga-map'),
+    gaPortChipsContainer: document.getElementById('ga-port-chips-container'),
+    gaSelectedCount: document.getElementById('ga-selected-count'),
+    btnGaAll: document.getElementById('btn-ga-all'),
+    btnGaCore: document.getElementById('btn-ga-core'),
+    btnGaPorts: document.getElementById('btn-ga-ports'),
+    btnGaClear: document.getElementById('btn-ga-clear'),
+    gaPopSize: document.getElementById('ga-pop-size'),
+    gaPopVal: document.getElementById('ga-pop-val'),
+    gaGenerations: document.getElementById('ga-generations'),
+    gaGenVal: document.getElementById('ga-gen-val'),
+    gaCrossover: document.getElementById('ga-crossover'),
+    gaCxVal: document.getElementById('ga-cx-val'),
+    gaMutation: document.getElementById('ga-mutation'),
+    gaMutVal: document.getElementById('ga-mut-val'),
+    gaKpiDistance: document.getElementById('ga-kpi-distance'),
+    gaKpiFitness: document.getElementById('ga-kpi-fitness'),
+    gaKpiGens: document.getElementById('ga-kpi-gens'),
+    gaKpiStations: document.getElementById('ga-kpi-stations'),
+    gaEvolutionSvg: document.getElementById('ga-evolution-svg'),
+    gaTourSequenceList: document.getElementById('ga-tour-sequence-list'),
+    gaSumStart: document.getElementById('ga-sum-start'),
+    gaSumBest: document.getElementById('ga-sum-best'),
+    gaSumPct: document.getElementById('ga-sum-pct'),
+
+    // AI Syllabus Unit 2: Minimax Adversarial Search
+    btnMMStep: document.getElementById('btn-mm-step'),
+    btnMMAuto: document.getElementById('btn-mm-auto'),
+    btnMMReset: document.getElementById('btn-mm-reset'),
+    mmTurnPlayer: document.getElementById('mm-turn-player'),
+    mmStatusLabel: document.getElementById('mm-status-label'),
+    mmDepthSelect: document.getElementById('mm-depth-select'),
+    mmGridBoard: document.getElementById('mm-grid-board'),
+    mmDpadBtns: document.querySelectorAll('.dpad-btn'),
+    mmNodesCount: document.getElementById('mm-nodes-count'),
+    mmPrunedCount: document.getElementById('mm-pruned-count'),
+    mmEvalScore: document.getElementById('mm-eval-score'),
+    mmEfficiencyPct: document.getElementById('mm-efficiency-pct'),
+    mmTreeNodesList: document.getElementById('mm-tree-nodes-list')
   };
 
   // -------------------------------------------------------------
@@ -306,37 +446,62 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateClock, 1000);
   }
 
+  function switchMainTab(targetTab) {
+    state.activeTab = targetTab;
+
+    dom.navTabs.forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === targetTab);
+    });
+
+    dom.tabViews.forEach(view => {
+      view.classList.toggle('active', view.id === `view-${targetTab}`);
+    });
+
+    if (dom.appContainer) {
+      dom.appContainer.classList.toggle('commander-home', targetTab === 'tactical');
+    }
+
+    if (targetTab === 'tactical') {
+      setTimeout(() => {
+        if (state.map) {
+          state.map.invalidateSize();
+          fitMalaccaView();
+        }
+      }, 100);
+    } else if (targetTab === 'vessel-position') {
+      if (!state.crewMap) initCrewVesselMap();
+      setTimeout(() => {
+        if (state.crewMap) {
+          state.crewMap.invalidateSize();
+          fitCrewMalaccaView();
+          renderCrewVesselMarkers();
+        }
+      }, 100);
+    } else if (targetTab === 'expert-system') {
+      if (state.kbRules.length === 0) fetchKBRules();
+      evaluateExpertSystem(state.selectedVesselId);
+    } else if (targetTab === 'genetic-algorithm') {
+      if (state.gaWaypoints.length === 0) {
+        loadGAWaypoints();
+      } else if (!state.gaResult) {
+        runGeneticAlgorithm();
+      }
+    }
+  }
+
   function initTabNavigation() {
     dom.navTabs.forEach(btn => {
       btn.addEventListener('click', () => {
-        const targetTab = btn.dataset.tab;
-        state.activeTab = targetTab;
-
-        dom.navTabs.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        dom.tabViews.forEach(view => {
-          if (view.id === `view-${targetTab}`) {
-            view.classList.add('active');
-          } else {
-            view.classList.remove('active');
-          }
-        });
-
-        if (dom.appContainer) {
-          dom.appContainer.classList.toggle('commander-home', targetTab === 'tactical');
-        }
-
-        if (targetTab === 'tactical' && state.map) {
-          setTimeout(() => {
-            state.map.invalidateSize();
-            fitMalaccaView();
-          }, 100);
-        }
+        switchMainTab(btn.dataset.tab);
       });
     });
 
     initMapOverlays();
+    initRoleSwitcher();
+    initCrewCockpitControls();
+    initExpertSystemEvents();
+    initGAEvents();
+
 
     // Right Panel Sub-Tabs in Tactical View
     dom.rightTabs.forEach(btn => {
@@ -435,19 +600,29 @@ document.addEventListener('DOMContentLoaded', () => {
           dom.appContainer.classList.remove('hidden');
           dom.activeRoleBadge.textContent = state.currentRole.toUpperCase();
 
-          requestAnimationFrame(() => {
+          const isCrew = (state.currentRole || '').toLowerCase().includes('crew');
+          if (dom.btnRoleCommander && dom.btnRoleCrew) {
+            dom.btnRoleCommander.classList.toggle('active', !isCrew);
+            dom.btnRoleCrew.classList.toggle('active', isCrew);
+          }
+
+          requestAnimationFrame(async () => {
             if (!state.map) {
               initMap();
               loadPorts();
               loadThreats();
-              renderContactsList();
               renderThreatIntelCards();
-              renderVesselLogTable();
               renderCommsMessages();
               fetchStatus();
             } else {
               state.map.invalidateSize();
             }
+
+            await fetchFleetVessels();
+            if (state.fleetPollInterval) clearInterval(state.fleetPollInterval);
+            state.fleetPollInterval = setInterval(fetchFleetVessels, 3500);
+
+            switchMainTab('vessel-position');
           });
         } else {
           dom.loginError.textContent = data.error || 'Authentication failed.';
@@ -480,6 +655,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.btnLogout) {
       dom.btnLogout.addEventListener('click', async () => {
         if (state.isAutoTransiting) stopAutoTransit();
+        if (state.isAutoSimulating) {
+          state.isAutoSimulating = false;
+          if (dom.btnCrewSimAuto) {
+            dom.btnCrewSimAuto.textContent = '⏯ AUTO-TICKER';
+            dom.btnCrewSimAuto.classList.remove('danger-cyber-btn');
+          }
+          if (state.simInterval) clearInterval(state.simInterval);
+        }
+        if (state.fleetPollInterval) clearInterval(state.fleetPollInterval);
         await fetch('/api/auth/logout', { method: 'POST' });
         state.isAuthenticated = false;
         dom.appContainer.classList.add('hidden');
@@ -1409,6 +1593,1504 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `);
     state.layers.vessel.addLayer(marker);
+  }
+
+  // -------------------------------------------------------------
+  // 8. VESSEL POSITION COCKPIT & FLEET SYNC (CREW & COMMANDER)
+  // -------------------------------------------------------------
+  function mapVesselToContact(v) {
+    let symbol = '◇';
+    const vc = (v.vessel_class || '').toLowerCase();
+    if (vc.includes('submarine')) symbol = 'V';
+    else if (vc.includes('tug') || vc.includes('patrol')) symbol = '△';
+    else if (vc.includes('tanker')) symbol = '◈';
+    else if (vc.includes('flagship') || vc.includes('escort')) symbol = '▲';
+    else symbol = 'o';
+
+    let flagCode = 'SG';
+    if (v.flag === 'Singapore') flagCode = 'SG';
+    else if (v.flag === 'Marshall Islands') flagCode = 'MH';
+    else if (v.flag === 'Panama') flagCode = 'PA';
+    else if (v.flag === 'Malaysia') flagCode = 'MY';
+    else if (v.flag === 'Liberia') flagCode = 'LR';
+    else flagCode = (v.flag || '??').slice(0, 2).toUpperCase();
+
+    const distFromLead = Math.round(Math.sqrt(Math.pow((v.lat - 5.416), 2) + Math.pow((v.lon - 100.345), 2)) * 60);
+
+    return {
+      id: v.id,
+      name: v.name,
+      class: (v.vessel_class || v.type || 'VESSEL').toUpperCase(),
+      flag: flagCode,
+      symbol: symbol,
+      threat: (v.threat_level || 'low').toLowerCase(),
+      threatLabel: (v.threat_label || v.threat_level || 'LOW').toUpperCase(),
+      lat: v.lat,
+      lon: v.lon,
+      hdg: `${Math.round(v.heading_deg)}° ${v.heading_cardinal || ''}`.trim(),
+      speed: Math.round(v.speed_knots * 10) / 10,
+      depth: `${v.depth_m || 0}m`,
+      lastSeen: v.last_contact || 'LIVE',
+      aiConfidence: v.ai_confidence || 92,
+      mmsi: v.mmsi || 'N/A',
+      type: v.type || v.vessel_class,
+      dist: `${distFromLead}nm`,
+      details: `${v.notes || ''} [Status: ${v.status} | Route: ${v.origin_port} ➔ ${v.dest_port} | Deviation: ${v.route_deviation ? 'ALERT ACTIVE' : 'NOMINAL'}]`
+    };
+  }
+
+  async function fetchFleetVessels() {
+    try {
+      const resp = await fetch('/api/fleet/vessels');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      state.fleetVessels = data.vessels || [];
+
+      // Sourced directly from Vessel Position module:
+      TRACKED_CONTACTS = state.fleetVessels.map(mapVesselToContact);
+
+      // Dynamically update Fleet Commander view:
+      renderContactsList(dom.contactSearchInput ? dom.contactSearchInput.value : '');
+      renderContactMarkersOnMap();
+      renderVesselLogTable();
+
+      // Update Vessel Crew view:
+      updateCrewVesselDropdown();
+      const currentVessel = state.fleetVessels.find(v => v.id === state.selectedVesselId) || state.fleetVessels[0];
+      if (currentVessel) {
+        updateCrewTelemetryUI(currentVessel);
+        evaluateCockpitExpert(currentVessel.id);
+      }
+      renderCrewVesselMarkers();
+      renderCrewFleetTable();
+    } catch (err) {
+      console.error('Error fetching fleet vessels:', err);
+    }
+  }
+
+  function updateCrewVesselDropdown() {
+    const selects = [dom.crewVesselSelect, dom.expertVesselSelect].filter(Boolean);
+    selects.forEach(sel => {
+      const currentVal = sel.value;
+      if (sel.children.length !== state.fleetVessels.length) {
+        sel.innerHTML = '';
+        state.fleetVessels.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = `${v.id}: ${v.name} (${v.vessel_class || v.type})`;
+          sel.appendChild(opt);
+        });
+      }
+      if (currentVal && state.fleetVessels.some(v => v.id === currentVal)) {
+        sel.value = currentVal;
+      } else if (state.fleetVessels.length > 0) {
+        sel.value = state.fleetVessels[0].id;
+      }
+    });
+
+    if (state.fleetVessels.length > 0 && !state.selectedVesselId) {
+      state.selectedVesselId = state.fleetVessels[0].id;
+    }
+  }
+
+  function updateCrewTelemetryUI(v) {
+    if (!v) return;
+    const lat = v.lat;
+    const lon = v.lon;
+    const latDeg = Math.floor(Math.abs(lat));
+    const latMin = ((Math.abs(lat) - latDeg) * 60).toFixed(3);
+    const latDir = lat >= 0 ? 'N' : 'S';
+    const lonDeg = Math.floor(Math.abs(lon));
+    const lonMin = ((Math.abs(lon) - lonDeg) * 60).toFixed(3);
+    const lonDir = lon >= 0 ? 'E' : 'W';
+
+    if (dom.crewCoordDisplay) {
+      dom.crewCoordDisplay.textContent = `${String(latDeg).padStart(2, '0')}° ${latMin}' ${latDir}, ${String(lonDeg).padStart(3, '0')}° ${lonMin}' ${lonDir}`;
+    }
+    if (dom.crewCoordDecimal) {
+      dom.crewCoordDecimal.textContent = `(${lat.toFixed(5)}° ${latDir}, ${lon.toFixed(5)}° ${lonDir})`;
+    }
+    if (dom.crewSpeedDisplay) {
+      dom.crewSpeedDisplay.innerHTML = `${v.speed_knots.toFixed(1)} <span class="unit">KTS</span>`;
+    }
+    if (dom.crewSpeedBar) {
+      const pct = Math.min(100, Math.round((v.speed_knots / 30) * 100));
+      dom.crewSpeedBar.style.width = `${pct}%`;
+    }
+    if (dom.crewHeadingDisplay) {
+      dom.crewHeadingDisplay.innerHTML = `${Math.round(v.heading_deg)}° <span class="unit">${v.heading_cardinal || ''}</span>`;
+    }
+    if (dom.crewCompassNeedle) {
+      dom.crewCompassNeedle.style.transform = `rotate(${v.heading_deg}deg)`;
+    }
+    if (dom.crewCompassBearing) {
+      dom.crewCompassBearing.textContent = `${Math.round(v.heading_deg)}° ${v.heading_cardinal || ''}`;
+    }
+    if (dom.crewVesselStatus) {
+      dom.crewVesselStatus.textContent = v.status;
+      dom.crewVesselStatus.className = v.status === 'EN_ROUTE' || v.status === 'UNDERWAY' ? 'text-emerald' : 'text-cyan';
+    }
+    if (dom.crewVesselCallsign) dom.crewVesselCallsign.textContent = v.callsign || 'N/A';
+    if (dom.crewVesselRoute) dom.crewVesselRoute.textContent = `${v.origin_port || 'Port'} ➔ ${v.dest_port || 'Port'}`;
+    if (dom.crewVesselMmsi) dom.crewVesselMmsi.textContent = v.mmsi || 'N/A';
+    if (dom.crewVesselDepth) dom.crewVesselDepth.textContent = `${(v.depth_m || 10).toFixed(1)} M`;
+
+    if (dom.crewInputSpeed && document.activeElement !== dom.crewInputSpeed) {
+      dom.crewInputSpeed.value = v.speed_knots;
+      if (dom.crewSpeedValLabel) dom.crewSpeedValLabel.textContent = `${v.speed_knots.toFixed(1)} KTS`;
+    }
+    if (dom.crewInputHeading && document.activeElement !== dom.crewInputHeading) {
+      dom.crewInputHeading.value = Math.round(v.heading_deg);
+      if (dom.crewHeadingValLabel) dom.crewHeadingValLabel.textContent = `${Math.round(v.heading_deg)}°`;
+    }
+  }
+
+  function fitCrewMalaccaView() {
+    if (!state.crewMap) return;
+    state.crewMap.invalidateSize();
+    state.crewMap.fitBounds(MALACCA_BOUNDS, { padding: [20, 20], maxZoom: 8 });
+  }
+
+  function initCrewVesselMap() {
+    if (state.crewMap) return;
+    const container = document.getElementById('crew-vessel-map');
+    if (!container) return;
+
+    state.crewMap = L.map('crew-vessel-map', {
+      center: [3.2, 100.8],
+      zoom: 6,
+      minZoom: 5,
+      maxZoom: 12,
+      zoomControl: false,
+      maxBounds: MALACCA_BOUNDS.pad(0.3)
+    });
+
+    L.control.zoom({ position: 'topright' }).addTo(state.crewMap);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri Ocean Basemap',
+      maxZoom: 13
+    }).addTo(state.crewMap);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 13,
+      pane: 'shadowPane'
+    }).addTo(state.crewMap);
+
+    state.crewLayers.trails = L.layerGroup().addTo(state.crewMap);
+    state.crewLayers.vessels = L.layerGroup().addTo(state.crewMap);
+
+    fitCrewMalaccaView();
+  }
+
+  function renderCrewVesselMarkers() {
+    if (!state.crewLayers.vessels) return;
+    state.crewLayers.vessels.clearLayers();
+    state.crewLayers.trails.clearLayers();
+
+    state.fleetVessels.forEach(v => {
+      if (v.trail && v.trail.length > 1) {
+        L.polyline(v.trail, {
+          color: v.id === state.selectedVesselId ? '#00f3ff' : '#00ff88',
+          weight: v.id === state.selectedVesselId ? 2.5 : 1.5,
+          opacity: 0.7,
+          dashArray: '3 6'
+        }).addTo(state.crewLayers.trails);
+      }
+
+      const isSelected = v.id === state.selectedVesselId;
+      let color = '#00f3ff';
+      if (v.threat_level === 'critical') color = '#ff1e43';
+      else if (v.threat_level === 'high') color = '#ff8c00';
+      else if (v.vessel_class && v.vessel_class.includes('Escort')) color = '#ffd000';
+      else if (v.status === 'UNDERWAY' || v.status === 'EN_ROUTE') color = '#00ff88';
+
+      const icon = L.divIcon({
+        className: 'crew-vessel-marker-wrap',
+        html: `
+          <div class="crew-map-vessel-pin ${isSelected ? 'selected' : ''}" style="border-color:${color}">
+            <div class="vessel-arrow" style="transform: rotate(${v.heading_deg}deg); color:${color}">▲</div>
+            <div class="vessel-callout" style="color:${color}; border:1px solid ${color};">${v.name.split(' ')[0]} ${v.speed_knots}k</div>
+          </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      const marker = L.marker([v.lat, v.lon], { icon, zIndexOffset: isSelected ? 1500 : 500 });
+      marker.bindPopup(`
+        <div style="font-family:var(--font-mono); font-size:11px; padding:2px;">
+          <strong style="color:${color}">${v.name}</strong> (${v.id})<br>
+          Class: ${v.vessel_class}<br>
+          Position: ${v.lat.toFixed(4)}°N, ${v.lon.toFixed(4)}°E<br>
+          Speed: ${v.speed_knots} kts | Hdg: ${Math.round(v.heading_deg)}°<br>
+          Status: <strong>${v.status}</strong><br>
+          Deviation: <span style="color:${v.route_deviation ? '#ff1e43' : '#00ff88'}">${v.route_deviation ? 'ALERT: DEVIATING' : 'ON TRACK'}</span>
+        </div>
+      `);
+
+      marker.on('click', () => {
+        selectCrewVessel(v.id);
+      });
+
+      state.crewLayers.vessels.addLayer(marker);
+    });
+  }
+
+  function selectCrewVessel(vesselId) {
+    state.selectedVesselId = vesselId;
+    if (dom.crewVesselSelect) dom.crewVesselSelect.value = vesselId;
+    if (dom.expertVesselSelect) dom.expertVesselSelect.value = vesselId;
+    const v = state.fleetVessels.find(item => item.id === vesselId);
+    if (v) {
+      updateCrewTelemetryUI(v);
+      renderCrewVesselMarkers();
+      renderCrewFleetTable();
+      evaluateCockpitExpert(vesselId);
+      if (state.crewMap) {
+        state.crewMap.panTo([v.lat, v.lon]);
+      }
+    }
+  }
+
+  function renderCrewFleetTable() {
+    if (!dom.crewFleetTableBody) return;
+    dom.crewFleetTableBody.innerHTML = '';
+
+    state.fleetVessels.forEach(v => {
+      const isSelected = v.id === state.selectedVesselId;
+      const row = document.createElement('tr');
+      if (isSelected) row.classList.add('selected-vessel-row');
+
+      row.innerHTML = `
+        <td class="vessel-id-cell"><strong>${v.id}</strong></td>
+        <td><strong>${v.name}</strong></td>
+        <td>${v.vessel_class || v.type}</td>
+        <td>${v.flag}</td>
+        <td>${v.lat.toFixed(4)}°N</td>
+        <td>${v.lon.toFixed(4)}°E</td>
+        <td>${Math.round(v.heading_deg)}° ${v.heading_cardinal || ''}</td>
+        <td>${v.speed_knots.toFixed(1)} kn</td>
+        <td><span class="threat-badge ${v.status === 'UNDERWAY' || v.status === 'EN_ROUTE' ? 'low' : 'neutral'}">${v.status}</span></td>
+        <td>
+          <button class="cyber-btn sm-cyber-btn select-vessel-btn" data-vessel-id="${v.id}">
+            ${isSelected ? 'ACTIVE' : 'SELECT'}
+          </button>
+        </td>
+      `;
+
+      row.querySelector('.select-vessel-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectCrewVessel(v.id);
+      });
+
+      row.addEventListener('click', () => {
+        selectCrewVessel(v.id);
+      });
+
+      dom.crewFleetTableBody.appendChild(row);
+    });
+  }
+
+  function initCrewCockpitControls() {
+    if (dom.crewVesselSelect) {
+      dom.crewVesselSelect.addEventListener('change', (e) => {
+        selectCrewVessel(e.target.value);
+      });
+    }
+
+    if (dom.crewInputSpeed) {
+      dom.crewInputSpeed.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value).toFixed(1);
+        if (dom.crewSpeedValLabel) dom.crewSpeedValLabel.textContent = `${val} KTS`;
+      });
+    }
+
+    if (dom.crewInputHeading) {
+      dom.crewInputHeading.addEventListener('input', (e) => {
+        const val = Math.round(parseFloat(e.target.value));
+        if (dom.crewHeadingValLabel) dom.crewHeadingValLabel.textContent = `${val}°`;
+      });
+    }
+
+    // Speed Presets
+    document.querySelectorAll('.speed-presets .preset-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const spd = parseFloat(btn.dataset.speed);
+        if (dom.crewInputSpeed) {
+          dom.crewInputSpeed.value = spd;
+          if (dom.crewSpeedValLabel) dom.crewSpeedValLabel.textContent = `${spd.toFixed(1)} KTS`;
+        }
+      });
+    });
+
+    // Heading Presets
+    const btnPort = document.getElementById('btn-helm-port');
+    const btnMid = document.getElementById('btn-helm-midships');
+    const btnStbd = document.getElementById('btn-helm-stbd');
+
+    if (btnPort) {
+      btnPort.addEventListener('click', () => {
+        if (dom.crewInputHeading) {
+          let h = (parseInt(dom.crewInputHeading.value, 10) - 10 + 360) % 360;
+          dom.crewInputHeading.value = h;
+          if (dom.crewHeadingValLabel) dom.crewHeadingValLabel.textContent = `${h}°`;
+        }
+      });
+    }
+    if (btnMid) {
+      btnMid.addEventListener('click', () => {
+        if (dom.crewInputHeading) {
+          dom.crewInputHeading.value = 0;
+          if (dom.crewHeadingValLabel) dom.crewHeadingValLabel.textContent = `0°`;
+        }
+      });
+    }
+    if (btnStbd) {
+      btnStbd.addEventListener('click', () => {
+        if (dom.crewInputHeading) {
+          let h = (parseInt(dom.crewInputHeading.value, 10) + 10) % 360;
+          dom.crewInputHeading.value = h;
+          if (dom.crewHeadingValLabel) dom.crewHeadingValLabel.textContent = `${h}°`;
+        }
+      });
+    }
+
+    // Transmit to Fleet Commander
+    if (dom.btnCrewApplyHelm) {
+      dom.btnCrewApplyHelm.addEventListener('click', async () => {
+        const speed = parseFloat(dom.crewInputSpeed.value);
+        const heading = parseFloat(dom.crewInputHeading.value);
+        dom.btnCrewApplyHelm.disabled = true;
+        dom.btnCrewApplyHelm.textContent = 'TRANSMITTING...';
+
+        try {
+          const resp = await fetch(`/api/fleet/vessels/${state.selectedVesselId}/telemetry`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ speed_knots: speed, heading_deg: heading })
+          });
+          if (resp.ok) {
+            await fetchFleetVessels();
+            dom.btnCrewApplyHelm.textContent = '✓ TRANSMITTED TO FLEET COMMANDER';
+            setTimeout(() => {
+              dom.btnCrewApplyHelm.textContent = 'TRANSMIT TO FLEET COMMANDER';
+              dom.btnCrewApplyHelm.disabled = false;
+            }, 1200);
+          } else {
+            dom.btnCrewApplyHelm.textContent = 'TRANSMISSION FAILED';
+            setTimeout(() => {
+              dom.btnCrewApplyHelm.textContent = 'TRANSMIT TO FLEET COMMANDER';
+              dom.btnCrewApplyHelm.disabled = false;
+            }, 1500);
+          }
+        } catch (err) {
+          console.error('Helm transmission error:', err);
+          dom.btnCrewApplyHelm.disabled = false;
+          dom.btnCrewApplyHelm.textContent = 'TRANSMIT TO FLEET COMMANDER';
+        }
+      });
+    }
+
+    // Simulation Step (+1 Min)
+    if (dom.btnCrewSimStep) {
+      dom.btnCrewSimStep.addEventListener('click', async () => {
+        dom.btnCrewSimStep.disabled = true;
+        try {
+          await fetch('/api/fleet/simulate_tick', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step_minutes: 1.0 })
+          });
+          await fetchFleetVessels();
+        } catch (err) {
+          console.error('Sim step error:', err);
+        } finally {
+          dom.btnCrewSimStep.disabled = false;
+        }
+      });
+    }
+
+    // Simulation Auto-Ticker
+    if (dom.btnCrewSimAuto) {
+      dom.btnCrewSimAuto.addEventListener('click', () => {
+        state.isAutoSimulating = !state.isAutoSimulating;
+        if (state.isAutoSimulating) {
+          dom.btnCrewSimAuto.textContent = '⏸ PAUSE TICKER';
+          dom.btnCrewSimAuto.classList.add('danger-cyber-btn');
+          state.simInterval = setInterval(async () => {
+            try {
+              await fetch('/api/fleet/simulate_tick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ step_minutes: 1.0 })
+              });
+              await fetchFleetVessels();
+            } catch (err) {
+              console.error('Sim tick error:', err);
+            }
+          }, 1600);
+        } else {
+          dom.btnCrewSimAuto.textContent = '⏯ AUTO-TICKER';
+          dom.btnCrewSimAuto.classList.remove('danger-cyber-btn');
+          if (state.simInterval) clearInterval(state.simInterval);
+        }
+      });
+    }
+
+    // Report Route Deviation
+    if (dom.btnCrewReportDeviation) {
+      dom.btnCrewReportDeviation.addEventListener('click', async () => {
+        dom.btnCrewReportDeviation.disabled = true;
+        try {
+          const resp = await fetch(`/api/fleet/vessels/${state.selectedVesselId}/deviate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat_offset: 0.08, lon_offset: 0.06 })
+          });
+          const data = await resp.json();
+          await fetchFleetVessels();
+          alert(`⚠️ ROUTE DEVIATION REPORTED!\n\n${data.alert}\nNew Position: ${data.vessel.lat.toFixed(4)}°N, ${data.vessel.lon.toFixed(4)}°E\nAlert broadcast to Fleet Commander Tactical View.`);
+        } catch (err) {
+          alert('Failed to report deviation.');
+        } finally {
+          dom.btnCrewReportDeviation.disabled = false;
+        }
+      });
+    }
+  }
+
+  // =============================================================
+  // 8. AI SYLLABUS UNIT 6: MARITIME EXPERT SYSTEM & EXPLANATION FACILITY
+  // =============================================================
+  async function fetchKBRules() {
+    try {
+      const resp = await fetch('/api/ai/expert-system/rules');
+      const data = await resp.json();
+      state.kbRules = data.rules || [];
+      renderKBRules(state.kbRules);
+    } catch (err) {
+      console.error('Failed to fetch KB rules:', err);
+    }
+  }
+
+  function renderKBRules(rules) {
+    if (!dom.kbRulesAccordion) return;
+    dom.kbRulesAccordion.innerHTML = '';
+    rules.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'kb-rule-card';
+      const ruleId = r.id || r.rule_id || 'RULE';
+      card.id = `kb-rule-${ruleId}`;
+      const premises = r.premises || r.antecedents || [];
+      const premisesStr = premises.map(p => `${p.fact} ${p.op} ${p.val}`).join(' AND ');
+      const concl = r.conclusion || r.consequents || {};
+      const action = concl.action || 'ADVISE';
+      const targetSpeed = concl.target_speed_knots !== undefined ? concl.target_speed_knots : (concl.recommended_speed || 18.0);
+      const courseTrim = concl.course_trim_deg !== undefined ? concl.course_trim_deg : (concl.helm_trim_deg || 0.0);
+      const title = r.title || r.name || 'Maritime Rule';
+      const colreg = r.colreg_rule || r.colreg_ref || 'COLREGs';
+
+      card.innerHTML = `
+        <div class="kb-rule-head">
+          <span class="kb-rule-id">${ruleId}</span>
+          <span class="kb-rule-prio">PRIORITY ${r.priority} &bull; ${colreg}</span>
+        </div>
+        <div class="kb-rule-title">${title}</div>
+        <div class="kb-clause-box">
+          <div><strong>IF:</strong> ${premisesStr}</div>
+          <div class="mt-1"><strong>THEN:</strong> Action: ${action} | Speed: ${targetSpeed} kts | Trim: ${courseTrim}°</div>
+        </div>
+        <div class="text-xs text-dim mt-1" style="font-size:8px;">${r.rationale || ''}</div>
+      `;
+      dom.kbRulesAccordion.appendChild(card);
+    });
+  }
+
+  async function evaluateExpertSystem(vesselId, customFacts = null) {
+    try {
+      const payload = { vessel_id: vesselId || state.selectedVesselId || 'VESSEL-001' };
+      if (customFacts) payload.custom_facts = customFacts;
+
+      const resp = await fetch('/api/ai/expert-system/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (data.status !== 'success' && data.status !== 'ok') return;
+
+      state.expertAdvisory = data;
+
+      // 1. Populate Working Memory Table
+      if (dom.expertWmTableBody && data.working_memory) {
+        dom.expertWmTableBody.innerHTML = '';
+        let factsList = [];
+        if (Array.isArray(data.working_memory.facts)) {
+          factsList = data.working_memory.facts;
+        } else {
+          for (const [k, v] of Object.entries(data.working_memory)) {
+            if (k !== 'facts') {
+              factsList.push({ name: k, value: v, type: typeof v });
+            }
+          }
+        }
+
+        factsList.forEach(f => {
+          const row = document.createElement('tr');
+          let valDisplay = typeof f.value === 'boolean' ? (f.value ? 'TRUE' : 'FALSE') : f.value;
+          row.innerHTML = `
+            <td><strong class="text-cyan">${f.name}</strong></td>
+            <td><span class="${typeof f.value === 'boolean' && f.value ? 'text-amber' : ''}">${valDisplay}</span></td>
+            <td><span class="text-dim" style="font-size:8px;">${f.type || typeof f.value}</span></td>
+          `;
+          dom.expertWmTableBody.appendChild(row);
+        });
+      }
+
+      // 2. Populate Advisory Verdict Card
+      const rule = data.firing_rule || (data.primary_advisory ? {
+        id: data.primary_rule_id || 'RULE',
+        title: data.primary_rule_name || data.primary_advisory.headline || 'Active Advisory',
+        severity: data.primary_advisory.severity || 'nominal',
+        action: data.primary_advisory.action || 'MAINTAIN_CRUISE',
+        message: data.primary_advisory.message || '',
+        target_speed_knots: data.primary_advisory.recommended_speed || 18.0,
+        course_trim_deg: data.primary_advisory.helm_trim_deg || 0.0,
+        colreg_rule: data.fired_rules && data.fired_rules[0] ? (data.fired_rules[0].colreg_rule || data.fired_rules[0].colreg_ref) : 'COLREGs'
+      } : null);
+
+      if (rule && dom.expertVerdictCard) {
+        const sev = (rule.severity || 'nominal').toLowerCase();
+        dom.expertVerdictCard.className = `expert-advisory-card ${sev}`;
+        if (dom.expertVerdictBadge) {
+          dom.expertVerdictBadge.textContent = sev.toUpperCase();
+          dom.expertVerdictBadge.className = `threat-badge ${sev}`;
+        }
+        if (dom.expertVerdictRuleId) dom.expertVerdictRuleId.textContent = rule.id || rule.rule_id || 'RULE';
+        if (dom.expertVerdictColreg) dom.expertVerdictColreg.textContent = rule.colreg_rule || rule.colreg_ref || 'COLREGs';
+        if (dom.expertVerdictHeadline) dom.expertVerdictHeadline.textContent = rule.title || rule.headline || rule.name || 'Advisory';
+        if (dom.expertVerdictMessage) dom.expertVerdictMessage.textContent = rule.message || '';
+        if (dom.expertSpecAction) dom.expertSpecAction.textContent = rule.action || 'MAINTAIN_CRUISE';
+        if (dom.expertSpecSpeed) dom.expertSpecSpeed.textContent = `${rule.target_speed_knots || 18.0} KTS`;
+        if (dom.expertSpecTrim) {
+          const trim = rule.course_trim_deg !== undefined ? rule.course_trim_deg : 0.0;
+          dom.expertSpecTrim.textContent = trim === 0 ? '0.0° MIDSHIPS' : (trim > 0 ? `+${trim}° STBD` : `${trim}° PORT`);
+        }
+
+        // Highlight in KB list
+        document.querySelectorAll('.kb-rule-card').forEach(c => c.classList.remove('fired'));
+        const activeCard = document.getElementById(`kb-rule-${rule.id || rule.rule_id}`);
+        if (activeCard) activeCard.classList.add('fired');
+      }
+
+      // 3. Update Cockpit Widget on Vessel Position Deck
+      updateCockpitWidget(rule);
+
+      // 4. Render WHY & HOW Explanations
+      const whyExp = data.why_explanation || (data.explanation_facility ? data.explanation_facility.why : null);
+      const howExp = data.how_explanation || (data.explanation_facility ? data.explanation_facility.how : null);
+      if (whyExp) renderWhyExplanation(whyExp);
+      if (howExp) renderHowExplanation(howExp);
+
+    } catch (err) {
+      console.error('Expert system evaluation error:', err);
+    }
+  }
+
+  function updateCockpitWidget(rule) {
+    if (!rule) return;
+    const sev = (rule.severity || 'nominal').toLowerCase();
+    if (dom.cockpitExpertBadge) {
+      dom.cockpitExpertBadge.textContent = sev.toUpperCase();
+      dom.cockpitExpertBadge.className = `threat-badge ${sev}`;
+    }
+    if (dom.cockpitExpertHeadline) {
+      dom.cockpitExpertHeadline.textContent = `${rule.id || rule.rule_id || 'RULE'}: ${rule.action || 'ADVISORY'}`;
+    }
+    if (dom.cockpitExpertAction) {
+      dom.cockpitExpertAction.textContent = rule.message || 'Navigation parameters verified against safety rules.';
+    }
+  }
+
+  async function evaluateCockpitExpert(vesselId) {
+    try {
+      const resp = await fetch('/api/ai/expert-system/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vessel_id: vesselId })
+      });
+      const data = await resp.json();
+      if ((data.status === 'success' || data.status === 'ok')) {
+        const rule = data.firing_rule || (data.primary_advisory ? {
+          id: data.primary_rule_id,
+          title: data.primary_rule_name,
+          action: data.primary_advisory.action,
+          message: data.primary_advisory.message,
+          severity: data.primary_advisory.severity
+        } : null);
+        if (rule) {
+          updateCockpitWidget(rule);
+          state.expertAdvisory = data;
+        }
+      }
+    } catch (e) {
+      console.error('Cockpit expert advisory poll error:', e);
+    }
+  }
+
+  function renderWhyExplanation(why) {
+    if (!why) return;
+    const titleEl = document.getElementById('why-question-title');
+    if (titleEl) titleEl.textContent = why.question || 'Why was this advisory generated?';
+
+    if (dom.whyPremisesList && why.premises_evaluated) {
+      dom.whyPremisesList.innerHTML = '';
+      why.premises_evaluated.forEach(p => {
+        const row = document.createElement('div');
+        const matched = p.matched !== false && p.satisfied !== false;
+        row.className = `premise-row ${matched ? 'matched' : 'unmet'}`;
+        const opStr = p.operator || p.op || '=';
+        const reqVal = p.required_value !== undefined ? p.required_value : p.val;
+        row.innerHTML = `
+          <div>
+            <div class="premise-name">${p.fact}</div>
+            <div class="premise-detail">Condition: ${p.fact} ${opStr} ${reqVal} &bull; Actual: <strong>${p.actual_value}</strong></div>
+          </div>
+          <span class="premise-status-pill ${matched ? 'matched' : 'unmet'}">
+            ${matched ? '✓ MATCHED' : '✗ UNMET'}
+          </span>
+        `;
+        dom.whyPremisesList.appendChild(row);
+      });
+    }
+
+    if (dom.whyRationaleText) dom.whyRationaleText.textContent = why.maritime_justification || why.rationale || '—';
+    if (dom.whyStandardText) {
+      const ruleRef = why.rule_id ? `${why.rule_id}: ${why.rule_title || ''}` : '';
+      const std = why.governing_standard || why.colreg_rule || 'IMO COLREGs';
+      dom.whyStandardText.textContent = ruleRef ? `${std} (${ruleRef})` : std;
+    }
+  }
+
+  function renderHowExplanation(how) {
+    if (!how || !dom.howDerivationList) return;
+    dom.howDerivationList.innerHTML = '';
+    const steps = how.derivation_steps || [];
+    steps.forEach((step, idx) => {
+      const item = document.createElement('div');
+      item.className = 'derivation-step';
+      const stepNum = step.step !== undefined ? step.step : idx + 1;
+      const title = step.rule_title || step.rule_name || step.rule_id;
+      const checked = Array.isArray(step.premises_evaluated) ? step.premises_evaluated.join(' AND ') : JSON.stringify(step.matched_evidence || {});
+      const concl = step.conclusion_asserted || step.derived_action || 'Fired';
+      item.innerHTML = `
+        <div class="step-num">#${stepNum}</div>
+        <div class="step-body">
+          <div class="step-rule">${step.rule_id}: ${title} ${step.fired ? '⚡ <strong style="color:var(--neon-cyan)">[FIRED]</strong>' : ''}</div>
+          <div class="text-dim" style="font-size:8px;">Checked: ${checked}</div>
+          <div class="step-concl">Asserted ➔ ${concl}</div>
+        </div>
+      `;
+      dom.howDerivationList.appendChild(item);
+    });
+  }
+
+  function initExpertSystemEvents() {
+    if (dom.btnEvalExpert) {
+      dom.btnEvalExpert.addEventListener('click', () => {
+        const sel = dom.expertVesselSelect ? dom.expertVesselSelect.value : state.selectedVesselId;
+        evaluateExpertSystem(sel);
+      });
+    }
+
+    if (dom.expertVesselSelect) {
+      dom.expertVesselSelect.addEventListener('change', (e) => {
+        selectCrewVessel(e.target.value);
+        evaluateExpertSystem(e.target.value);
+      });
+    }
+
+    // What-If sliders
+    if (dom.sbDepth) {
+      dom.sbDepth.addEventListener('input', (e) => {
+        if (dom.sbDepthVal) dom.sbDepthVal.textContent = `${parseFloat(e.target.value).toFixed(1)} m`;
+      });
+    }
+    if (dom.sbSpeed) {
+      dom.sbSpeed.addEventListener('input', (e) => {
+        if (dom.sbSpeedVal) dom.sbSpeedVal.textContent = `${parseFloat(e.target.value).toFixed(1)} kts`;
+      });
+    }
+    if (dom.sbWeather) {
+      dom.sbWeather.addEventListener('input', (e) => {
+        if (dom.sbWeatherVal) dom.sbWeatherVal.textContent = parseFloat(e.target.value).toFixed(1);
+      });
+    }
+
+    if (dom.btnEvalSandbox) {
+      dom.btnEvalSandbox.addEventListener('click', () => {
+        const customFacts = {
+          depth_m: parseFloat(dom.sbDepth ? dom.sbDepth.value : 10.5),
+          speed_knots: parseFloat(dom.sbSpeed ? dom.sbSpeed.value : 18.0),
+          weather_severity: parseFloat(dom.sbWeather ? dom.sbWeather.value : 3.0),
+          in_chokepoint: dom.sbChokepoint ? dom.sbChokepoint.checked : false,
+          route_deviation: dom.sbDeviation ? dom.sbDeviation.checked : false
+        };
+        const sel = dom.expertVesselSelect ? dom.expertVesselSelect.value : state.selectedVesselId;
+        evaluateExpertSystem(sel, customFacts);
+      });
+    }
+
+    // Explanation tabs
+    if (dom.explTabBtns) {
+      dom.explTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          dom.explTabBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const target = btn.dataset.expl;
+
+          if (dom.explPaneWhy) dom.explPaneWhy.classList.toggle('hidden', target !== 'why');
+          if (dom.explPaneHow) dom.explPaneHow.classList.toggle('hidden', target !== 'how');
+          if (dom.explPaneKb) dom.explPaneKb.classList.toggle('hidden', target !== 'kb');
+
+          if (target === 'kb' && state.kbRules.length === 0) {
+            fetchKBRules();
+          }
+        });
+      });
+    }
+
+    // Cockpit widget buttons
+    if (dom.btnCockpitRunExpert) {
+      dom.btnCockpitRunExpert.addEventListener('click', () => {
+        evaluateCockpitExpert(state.selectedVesselId);
+      });
+    }
+    if (dom.btnCockpitExplainExpert) {
+      dom.btnCockpitExplainExpert.addEventListener('click', () => {
+        switchMainTab('expert-system');
+        const whyBtn = document.getElementById('btn-expl-why');
+        if (whyBtn) whyBtn.click();
+      });
+    }
+  }
+
+  // =============================================================
+  // 9. AI SYLLABUS UNIT 2: GENETIC ALGORITHM FLEET PATROL OPTIMIZER
+  // =============================================================
+  async function loadGAWaypoints() {
+    try {
+      const resp = await fetch('/api/ai/genetic-algorithm/waypoints');
+      const data = await resp.json();
+      const waypoints = data.waypoints || [];
+      state.gaWaypoints = waypoints;
+      state.selectedGAWaypointIds = new Set(waypoints.map(w => w.id));
+      renderGAPortChips();
+      runGeneticAlgorithm();
+    } catch (e) {
+      console.error('Error loading GA waypoints:', e);
+    }
+  }
+
+  function renderGAPortChips() {
+    if (!dom.gaPortChipsContainer || !state.gaWaypoints) return;
+    dom.gaPortChipsContainer.innerHTML = '';
+
+    state.gaWaypoints.forEach(w => {
+      const isSelected = state.selectedGAWaypointIds.has(w.id);
+      const chip = document.createElement('label');
+      chip.className = `ga-port-chip ${isSelected ? 'selected' : ''}`;
+      chip.innerHTML = `
+        <input type="checkbox" value="${w.id}" ${isSelected ? 'checked' : ''}>
+        <div class="ga-chip-info">
+          <span class="ga-chip-name">${w.name}</span>
+          <span class="ga-chip-coords">${w.lat.toFixed(2)}°N, ${w.lon.toFixed(2)}°E &bull; ${w.type}</span>
+        </div>
+      `;
+      const cb = chip.querySelector('input');
+      cb.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          state.selectedGAWaypointIds.add(w.id);
+          chip.classList.add('selected');
+        } else {
+          if (state.selectedGAWaypointIds.size <= 3) {
+            alert('A minimum of 3 ports is required for a closed patrol tour!');
+            e.target.checked = true;
+            return;
+          }
+          state.selectedGAWaypointIds.delete(w.id);
+          chip.classList.remove('selected');
+        }
+        updateGAPortCount();
+      });
+      dom.gaPortChipsContainer.appendChild(chip);
+    });
+
+    updateGAPortCount();
+  }
+
+  function updateGAPortCount() {
+    const count = state.selectedGAWaypointIds.size;
+    const total = state.gaWaypoints.length;
+    if (dom.gaSelectedCount) {
+      dom.gaSelectedCount.textContent = `${count} / ${total} PORTS SELECTED`;
+    }
+    if (dom.gaKpiStations) {
+      dom.gaKpiStations.textContent = `${count} WAYPOINTS`;
+    }
+  }
+
+  async function runGeneticAlgorithm() {
+    const selectedIds = Array.from(state.selectedGAWaypointIds);
+    if (selectedIds.length < 3) {
+      alert('Please select at least 3 ports to evolve a closed round-trip patrol loop!');
+      return;
+    }
+
+    if (dom.btnRunGA) {
+      dom.btnRunGA.disabled = true;
+      dom.btnRunGA.textContent = 'EVOLVING POPULATION...';
+    }
+
+    try {
+      const popSize = parseInt(dom.gaPopSize ? dom.gaPopSize.value : 40, 10);
+      const generations = parseInt(dom.gaGenerations ? dom.gaGenerations.value : 50, 10);
+      const crossoverRate = parseFloat(dom.gaCrossover ? dom.gaCrossover.value : 0.85);
+      const mutationRate = parseFloat(dom.gaMutation ? dom.gaMutation.value : 0.25);
+
+      const resp = await fetch('/api/ai/genetic-algorithm/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          population_size: popSize,
+          pop_size: popSize,
+          generations: generations,
+          crossover_rate: crossoverRate,
+          mutation_rate: mutationRate,
+          selected_waypoint_ids: selectedIds
+        })
+      });
+      const data = await resp.json();
+      if (data.status !== 'success' && data.status !== 'ok') return;
+
+      state.gaResult = data;
+
+      const totalDist = data.total_distance_nm || data.best_distance_nm || (data.best_tour && data.best_tour.distance_nm) || 0;
+      const bestFit = data.best_fitness || (data.best_tour && data.best_tour.fitness) || 0;
+      const gens = data.generations_completed || generations;
+      const tourList = Array.isArray(data.best_tour) ? data.best_tour : (data.best_tour && data.best_tour.waypoints ? data.best_tour.waypoints : []);
+
+      // Update KPIs
+      if (dom.gaKpiDistance) dom.gaKpiDistance.textContent = `${Number(totalDist).toFixed(1)} NM`;
+      if (dom.gaKpiFitness) dom.gaKpiFitness.textContent = Number(bestFit).toFixed(4);
+      if (dom.gaKpiGens) dom.gaKpiGens.textContent = `${gens} / ${generations}`;
+      if (dom.gaKpiStations) dom.gaKpiStations.textContent = `${tourList.length} WAYPOINTS`;
+
+      // Render Evolution Chart & Sequence
+      const history = data.evolution_history || data.history || [];
+      renderGAEvolutionChart(history);
+      renderGATourSequence(tourList, totalDist);
+
+    } catch (err) {
+      console.error('GA Run Error:', err);
+    } finally {
+      if (dom.btnRunGA) {
+        dom.btnRunGA.disabled = false;
+        dom.btnRunGA.textContent = '🧬 EVOLVE PATROL TOUR';
+      }
+    }
+  }
+
+  function renderGAEvolutionChart(history) {
+    if (!dom.gaEvolutionSvg || !history || history.length === 0) return;
+
+    // Update Telemetry Summary
+    const startDist = history[0].best_distance_nm;
+    const endDist = history[history.length - 1].best_distance_nm;
+    const pctSaved = Math.max(0, ((startDist - endDist) / startDist) * 100).toFixed(1);
+    if (dom.gaSumStart) dom.gaSumStart.textContent = `${Number(startDist).toFixed(1)} NM`;
+    if (dom.gaSumBest) dom.gaSumBest.textContent = `${Number(endDist).toFixed(1)} NM`;
+    if (dom.gaSumPct) dom.gaSumPct.textContent = `-${pctSaved}% OPTIMIZED`;
+
+    const svg = dom.gaEvolutionSvg;
+    svg.innerHTML = '';
+
+    const width = 560;
+    const height = 220;
+    const padLeft = 55;
+    const padRight = 25;
+    const padTop = 20;
+    const padBottom = 32;
+
+    const plotW = width - padLeft - padRight;
+    const plotH = height - padTop - padBottom;
+
+    const allDists = history.flatMap(h => [
+      h.best_distance_nm,
+      h.mean_distance_nm !== undefined ? h.mean_distance_nm : h.avg_distance_nm
+    ]);
+    const minD = Math.floor(Math.min(...allDists) * 0.95);
+    const maxD = Math.ceil(Math.max(...allDists) * 1.05);
+    const numGens = Math.max(1, history.length - 1);
+
+    const getX = (idx) => padLeft + (idx / numGens) * plotW;
+    const getY = (dist) => padTop + plotH - ((dist - minD) / (Math.max(1, maxD - minD))) * plotH;
+
+    // SVG Defs for gradients & filters
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = `
+      <linearGradient id="ga-glow-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.30"/>
+        <stop offset="100%" stop-color="#00f3ff" stop-opacity="0.0"/>
+      </linearGradient>
+      <filter id="ga-cyan-glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2.5" result="glow"/>
+        <feMerge>
+          <feMergeNode in="glow"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    `;
+    svg.appendChild(defs);
+
+    // Grid lines & labels (Y Axis)
+    const gridCount = 4;
+    for (let i = 0; i <= gridCount; i++) {
+      const yVal = minD + (i / gridCount) * (maxD - minD);
+      const yPos = getY(yVal);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', padLeft);
+      line.setAttribute('y1', yPos);
+      line.setAttribute('x2', width - padRight);
+      line.setAttribute('y2', yPos);
+      line.setAttribute('stroke', 'rgba(255, 255, 255, 0.08)');
+      line.setAttribute('stroke-width', '1');
+      svg.appendChild(line);
+
+      const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      txt.setAttribute('x', padLeft - 8);
+      txt.setAttribute('y', yPos + 3.5);
+      txt.setAttribute('text-anchor', 'end');
+      txt.setAttribute('fill', '#94a3b8');
+      txt.setAttribute('font-size', '8.5');
+      txt.setAttribute('font-family', 'monospace');
+      txt.textContent = `${Math.round(yVal)} NM`;
+      svg.appendChild(txt);
+    }
+
+    // X Axis Generation Labels
+    const xIntervals = [0, Math.floor(numGens * 0.25), Math.floor(numGens * 0.5), Math.floor(numGens * 0.75), numGens];
+    const uniqueIntervals = [...new Set(xIntervals)];
+    uniqueIntervals.forEach(idx => {
+      const h = history[idx] || history[0];
+      const genNum = h.gen || h.generation || idx + 1;
+      const xPos = getX(idx);
+
+      const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      txt.setAttribute('x', xPos);
+      txt.setAttribute('y', height - 10);
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('fill', '#94a3b8');
+      txt.setAttribute('font-size', '8.5');
+      txt.setAttribute('font-family', 'monospace');
+      txt.textContent = `Gen ${genNum}`;
+      svg.appendChild(txt);
+    });
+
+    // Area fill under Best Curve
+    const areaPoints = [
+      `${getX(0).toFixed(1)},${(padTop + plotH).toFixed(1)}`,
+      ...history.map((h, idx) => `${getX(idx).toFixed(1)},${getY(h.best_distance_nm).toFixed(1)}`),
+      `${getX(history.length - 1).toFixed(1)},${(padTop + plotH).toFixed(1)}`
+    ].join(' ');
+
+    const areaPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    areaPolygon.setAttribute('points', areaPoints);
+    areaPolygon.setAttribute('fill', 'url(#ga-glow-grad)');
+    svg.appendChild(areaPolygon);
+
+    // Mean Line (Amber dashed)
+    const meanPoints = history.map((h, idx) => {
+      const d = h.mean_distance_nm !== undefined ? h.mean_distance_nm : h.avg_distance_nm;
+      return `${getX(idx).toFixed(1)},${getY(d).toFixed(1)}`;
+    }).join(' ');
+
+    const meanPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    meanPolyline.setAttribute('points', meanPoints);
+    meanPolyline.setAttribute('fill', 'none');
+    meanPolyline.setAttribute('stroke', '#ffb700');
+    meanPolyline.setAttribute('stroke-width', '1.6');
+    meanPolyline.setAttribute('stroke-dasharray', '4 4');
+    meanPolyline.setAttribute('opacity', '0.85');
+    svg.appendChild(meanPolyline);
+
+    // Best Line (Cyan glow)
+    const bestPoints = history.map((h, idx) => `${getX(idx).toFixed(1)},${getY(h.best_distance_nm).toFixed(1)}`).join(' ');
+    const bestPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    bestPolyline.setAttribute('points', bestPoints);
+    bestPolyline.setAttribute('fill', 'none');
+    bestPolyline.setAttribute('stroke', '#00f3ff');
+    bestPolyline.setAttribute('stroke-width', '2.5');
+    bestPolyline.setAttribute('filter', 'url(#ga-cyan-glow)');
+    svg.appendChild(bestPolyline);
+
+    // Start point marker (amber)
+    const startCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    startCircle.setAttribute('cx', getX(0));
+    startCircle.setAttribute('cy', getY(history[0].best_distance_nm));
+    startCircle.setAttribute('r', '4');
+    startCircle.setAttribute('fill', '#ffb700');
+    startCircle.setAttribute('stroke', '#fff');
+    startCircle.setAttribute('stroke-width', '1.5');
+    svg.appendChild(startCircle);
+
+    // End point marker (cyan)
+    const lastH = history[history.length - 1];
+    const endCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    endCircle.setAttribute('cx', getX(history.length - 1));
+    endCircle.setAttribute('cy', getY(lastH.best_distance_nm));
+    endCircle.setAttribute('r', '5');
+    endCircle.setAttribute('fill', '#00f3ff');
+    endCircle.setAttribute('stroke', '#fff');
+    endCircle.setAttribute('stroke-width', '1.5');
+    endCircle.setAttribute('filter', 'url(#ga-cyan-glow)');
+    svg.appendChild(endCircle);
+  }
+
+  function renderGATourSequence(tour, totalDist) {
+    if (!dom.gaTourSequenceList || !tour) return;
+    dom.gaTourSequenceList.innerHTML = '';
+
+    tour.forEach((st, idx) => {
+      const card = document.createElement('div');
+      card.className = 'tour-step-card';
+      const isReturn = idx === tour.length - 1;
+      const lat = st.lat !== undefined ? Number(st.lat).toFixed(3) : '0.000';
+      const lon = st.lon !== undefined ? Number(st.lon).toFixed(3) : '0.000';
+      const legDist = st.leg_dist_nm !== undefined ? `+${Number(st.leg_dist_nm).toFixed(1)} NM` : (idx === 0 ? 'ORIGIN' : '');
+
+      card.innerHTML = `
+        <div class="tour-step-idx" style="${isReturn ? 'background:rgba(0,255,136,0.2); border-color:#00ff88; color:#00ff88;' : ''}">
+          ${isReturn ? '↺' : idx + 1}
+        </div>
+        <div class="tour-step-info">
+          <div class="tour-step-name">${st.name || st.id || 'Waypoint'}</div>
+          <div class="tour-step-coords">${lat}°N, ${lon}°E</div>
+        </div>
+        <div class="tour-step-leg">
+          ${legDist}
+        </div>
+      `;
+      dom.gaTourSequenceList.appendChild(card);
+    });
+  }
+
+  function plotGATourOnMap() {
+    const res = state.gaResult;
+    if (!res) {
+      alert('Please run the Genetic Algorithm first to evolve an optimal tour!');
+      return;
+    }
+
+    const tour = Array.isArray(res.best_tour) ? res.best_tour : (res.best_tour && res.best_tour.waypoints ? res.best_tour.waypoints : []);
+    if (!tour || tour.length === 0) {
+      alert('No tour waypoints available.');
+      return;
+    }
+
+    switchMainTab('vessel-position');
+
+    setTimeout(() => {
+      if (!state.crewMap) return;
+
+      if (!state.crewLayers.gaTour) {
+        state.crewLayers.gaTour = L.layerGroup().addTo(state.crewMap);
+      }
+      state.crewLayers.gaTour.clearLayers();
+
+      const coords = tour.map(st => [st.lat, st.lon]);
+
+      // Closed loop polyline
+      const tourLine = L.polyline(coords, {
+        color: '#00f3ff',
+        weight: 3.5,
+        opacity: 0.9,
+        dashArray: '5 10'
+      }).addTo(state.crewLayers.gaTour);
+
+      tour.forEach((st, idx) => {
+        const isOrigin = idx === 0 || idx === tour.length - 1;
+        const icon = L.divIcon({
+          className: 'ga-station-pin-wrap',
+          html: `
+            <div style="background:#040912; border:2px solid ${isOrigin ? '#00ff88' : '#00f3ff'}; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; font-weight:bold; box-shadow:0 0 8px ${isOrigin ? '#00ff88' : '#00f3ff'}; font-family:monospace;">
+              ${idx + 1}
+            </div>
+          `,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+
+        const m = L.marker([st.lat, st.lon], { icon }).addTo(state.crewLayers.gaTour);
+        m.bindPopup(`
+          <div style="font-family:monospace; font-size:11px;">
+            <strong style="color:#00f3ff;">PATROL STOP #${idx + 1}: ${st.name}</strong><br>
+            Coordinates: ${st.lat.toFixed(3)}°N, ${st.lon.toFixed(3)}°E<br>
+            Leg Distance: ${st.leg_dist_nm ? st.leg_dist_nm.toFixed(1) + ' NM' : 'STARTING POINT'}
+          </div>
+        `);
+      });
+
+      state.crewMap.fitBounds(tourLine.getBounds(), { padding: [40, 40] });
+    }, 200);
+  }
+
+  function initGAEvents() {
+    if (dom.btnGaAll) {
+      dom.btnGaAll.addEventListener('click', () => {
+        state.selectedGAWaypointIds = new Set(state.gaWaypoints.map(w => w.id));
+        renderGAPortChips();
+      });
+    }
+    if (dom.btnGaCore) {
+      dom.btnGaCore.addEventListener('click', () => {
+        const core = ['WP-PNG', 'WP-PKG', 'WP-MLC', 'WP-PLC', 'WP-SIN'];
+        state.selectedGAWaypointIds = new Set(core.filter(id => state.gaWaypoints.some(w => w.id === id)));
+        renderGAPortChips();
+      });
+    }
+    if (dom.btnGaPorts) {
+      dom.btnGaPorts.addEventListener('click', () => {
+        const ports = state.gaWaypoints.filter(w => w.type === 'PORT').map(w => w.id);
+        state.selectedGAWaypointIds = new Set(ports);
+        renderGAPortChips();
+      });
+    }
+    if (dom.btnGaClear) {
+      dom.btnGaClear.addEventListener('click', () => {
+        const first3 = state.gaWaypoints.slice(0, 3).map(w => w.id);
+        state.selectedGAWaypointIds = new Set(first3);
+        renderGAPortChips();
+      });
+    }
+
+    if (dom.gaPopSize) {
+      dom.gaPopSize.addEventListener('input', (e) => {
+        if (dom.gaPopVal) dom.gaPopVal.textContent = e.target.value;
+      });
+    }
+    if (dom.gaGenerations) {
+      dom.gaGenerations.addEventListener('input', (e) => {
+        if (dom.gaGenVal) dom.gaGenVal.textContent = e.target.value;
+      });
+    }
+    if (dom.gaCrossover) {
+      dom.gaCrossover.addEventListener('input', (e) => {
+        if (dom.gaCxVal) dom.gaCxVal.textContent = `${Math.round(parseFloat(e.target.value) * 100)}%`;
+      });
+    }
+    if (dom.gaMutation) {
+      dom.gaMutation.addEventListener('input', (e) => {
+        if (dom.gaMutVal) dom.gaMutVal.textContent = `${Math.round(parseFloat(e.target.value) * 100)}%`;
+      });
+    }
+
+    if (dom.btnRunGA) {
+      dom.btnRunGA.addEventListener('click', () => {
+        runGeneticAlgorithm();
+      });
+    }
+    if (dom.btnPlotGAMap) {
+      dom.btnPlotGAMap.addEventListener('click', () => {
+        plotGATourOnMap();
+      });
+    }
+  }
+
+  // =============================================================
+  // 10. AI SYLLABUS UNIT 2: MINIMAX ADVERSARIAL EVASION ARENA
+  // =============================================================
+  async function fetchMinimaxState() {
+    try {
+      const resp = await fetch('/api/ai/minimax/state');
+      const data = await resp.json();
+      const stateData = data.state || data;
+      state.minimaxState = stateData;
+      renderMinimaxBoard(stateData);
+      const tree = data.decision_tree || data.tree_trace || stateData.decision_tree || stateData.tree_trace;
+      if (tree) renderMinimaxDecisionTree(tree);
+    } catch (err) {
+      console.error('Fetch Minimax State Error:', err);
+    }
+  }
+
+  function renderMinimaxBoard(stateData) {
+    if (!dom.mmGridBoard || !stateData) return;
+    dom.mmGridBoard.innerHTML = '';
+
+    const v = stateData.vessel || stateData.vessel_pos || [7, 0];
+    const a = stateData.adversary || stateData.adversary_pos || [2, 5];
+    const g = stateData.gateway || [0, 7];
+    const reefs = new Set((stateData.reefs || []).map(rf => `${rf[0]},${rf[1]}`));
+
+    // Valid moves for MAX if it's MAX turn and game not over
+    const isMaxTurn = stateData.turn === 'MAX' || stateData.turn === 'VESSEL';
+    const validMoves = new Map();
+    if (isMaxTurn && !stateData.game_over) {
+      const dirs = [
+        [-1,-1,'NW'], [-1,0,'N'], [-1,1,'NE'],
+        [0,-1,'W'],   [0,0,'HOLD'], [0,1,'E'],
+        [1,-1,'SW'],  [1,0,'S'],  [1,1,'SE']
+      ];
+      dirs.forEach(([dr, dc, act]) => {
+        const nr = v[0] + dr;
+        const nc = v[1] + dc;
+        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && !reefs.has(`${nr},${nc}`)) {
+          validMoves.set(`${nr},${nc}`, act);
+        }
+      });
+    }
+
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell cell-water';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+
+        const key = `${r},${c}`;
+        if (reefs.has(key)) {
+          cell.className = 'grid-cell cell-reef';
+          cell.textContent = '🪨';
+        } else if (r === g[0] && c === g[1]) {
+          cell.className = 'grid-cell cell-gateway';
+          cell.textContent = '⚑';
+        }
+
+        if (r === v[0] && c === v[1]) {
+          cell.className = 'grid-cell cell-vessel';
+          cell.textContent = '🚢';
+        } else if (r === a[0] && c === a[1]) {
+          cell.className = 'grid-cell cell-adversary';
+          cell.textContent = '⚔️';
+        } else if (validMoves.has(key)) {
+          cell.classList.add('cell-valid-move');
+          cell.title = `Click to Move: ${validMoves.get(key)}`;
+          cell.addEventListener('click', () => {
+            playMinimaxMove(validMoves.get(key));
+          });
+        }
+
+        dom.mmGridBoard.appendChild(cell);
+      }
+    }
+
+    // Update Status & Telemetry
+    if (dom.mmTurnPlayer) {
+      dom.mmTurnPlayer.textContent = isMaxTurn ? 'MAX (FLEET VESSEL)' : 'MIN (HOSTILE DRONE)';
+      dom.mmTurnPlayer.style.color = isMaxTurn ? 'var(--neon-cyan)' : 'var(--neon-crimson)';
+    }
+
+    if (dom.mmStatusLabel) {
+      if (stateData.game_over) {
+        const msg = stateData.result_message || stateData.winner || 'GAME OVER';
+        dom.mmStatusLabel.textContent = msg;
+        dom.mmStatusLabel.className = msg.includes('REACHED') || msg.includes('ESCAPED') ? 'text-emerald' : 'text-crimson';
+      } else {
+        dom.mmStatusLabel.textContent = 'ACTIVE TACTICAL EVASION';
+        dom.mmStatusLabel.className = 'text-emerald';
+      }
+    }
+
+    const stats = stateData.stats || {};
+    const evaluated = stats.evaluated !== undefined ? stats.evaluated : (stats.nodes_evaluated || 0);
+    const pruned = stats.pruned !== undefined ? stats.pruned : (stats.branches_pruned || 0);
+    const bestScore = stats.best_score !== undefined ? stats.best_score : (stateData.minimax_eval !== undefined ? stateData.minimax_eval : '—');
+
+    if (dom.mmNodesCount) dom.mmNodesCount.textContent = evaluated;
+    if (dom.mmPrunedCount) dom.mmPrunedCount.textContent = pruned;
+    if (dom.mmEvalScore) dom.mmEvalScore.textContent = typeof bestScore === 'number' ? bestScore.toFixed(1) : bestScore;
+    if (dom.mmEfficiencyPct) {
+      const total = evaluated + pruned;
+      const pct = total > 0 ? Math.round((pruned / total) * 100) : 0;
+      dom.mmEfficiencyPct.textContent = `${pct}%`;
+    }
+  }
+
+  function renderMinimaxDecisionTree(decisionTree) {
+    if (!dom.mmTreeNodesList || !decisionTree) return;
+    dom.mmTreeNodesList.innerHTML = '';
+
+    if (decisionTree.length === 0) {
+      dom.mmTreeNodesList.innerHTML = '<div class="text-dim text-center py-4">No branches evaluated.</div>';
+      return;
+    }
+
+    decisionTree.forEach(node => {
+      const item = document.createElement('div');
+      item.className = `tree-node-item ${node.pruned ? 'pruned' : (node.is_best ? 'best-move' : '')}`;
+
+      let badgeClass = 'eval';
+      let badgeText = 'EVALUATED';
+      if (node.is_best) {
+        badgeClass = 'best';
+        badgeText = '★ OPTIMAL MOVE';
+      } else if (node.pruned) {
+        badgeClass = 'pruned';
+        badgeText = `✂️ PRUNED (${node.cutoff_type || 'α-β'})`;
+      }
+
+      const action = node.action || node.move || 'MOVE';
+      const scoreVal = node.score !== undefined ? node.score : node.eval;
+
+      item.innerHTML = `
+        <div>
+          <span class="tree-move-lbl">MOVE: ${action}</span>
+          <span class="text-dim" style="font-size:8px; margin-left:6px;">
+            ${node.pruned ? `Cutoff when α=${node.alpha} ≥ β=${node.beta}` : `Minimax Utility: ${scoreVal !== undefined ? Number(scoreVal).toFixed(1) : '—'}`}
+          </span>
+        </div>
+        <span class="tree-node-badge ${badgeClass}">${badgeText}</span>
+      `;
+      dom.mmTreeNodesList.appendChild(item);
+    });
+  }
+
+  async function playMinimaxMove(action = null) {
+    if (state.minimaxState && state.minimaxState.game_over && action) {
+      alert('The duel has concluded! Click "RESET" to start a new engagement.');
+      return;
+    }
+
+    try {
+      const depth = parseInt(dom.mmDepthSelect ? dom.mmDepthSelect.value : 4, 10);
+      const resp = await fetch('/api/ai/minimax/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, depth: depth })
+      });
+      const data = await resp.json();
+      const stateData = data.state || data;
+      state.minimaxState = stateData;
+      renderMinimaxBoard(stateData);
+      const tree = data.decision_tree || data.tree_trace || stateData.decision_tree || stateData.tree_trace;
+      if (tree) renderMinimaxDecisionTree(tree);
+    } catch (err) {
+      console.error('Minimax Move Error:', err);
+    }
+  }
+
+  function initMinimaxEvents() {
+    if (dom.btnMMStep) {
+      dom.btnMMStep.addEventListener('click', () => {
+        playMinimaxMove(null);
+      });
+    }
+
+    if (dom.btnMMReset) {
+      dom.btnMMReset.addEventListener('click', async () => {
+        if (state.minimaxAutoInterval) {
+          clearInterval(state.minimaxAutoInterval);
+          state.minimaxAutoInterval = null;
+          if (dom.btnMMAuto) {
+            dom.btnMMAuto.textContent = '⏯ AUTO-DUEL';
+            dom.btnMMAuto.classList.remove('danger-cyber-btn');
+          }
+        }
+        try {
+          const resp = await fetch('/api/ai/minimax/reset', { method: 'POST' });
+          const data = await resp.json();
+          const stateData = data.state || data;
+          state.minimaxState = stateData;
+          renderMinimaxBoard(stateData);
+          if (dom.mmTreeNodesList) dom.mmTreeNodesList.innerHTML = '<div class="text-dim text-center py-4">Board reset to initial tactical state. Take a move or click "MINIMAX STEP".</div>';
+        } catch (e) {
+          console.error('Reset error:', e);
+        }
+      });
+    }
+
+    if (dom.btnMMAuto) {
+      dom.btnMMAuto.addEventListener('click', () => {
+        if (state.minimaxAutoInterval) {
+          clearInterval(state.minimaxAutoInterval);
+          state.minimaxAutoInterval = null;
+          dom.btnMMAuto.textContent = '⏯ AUTO-DUEL';
+          dom.btnMMAuto.classList.remove('danger-cyber-btn');
+        } else {
+          dom.btnMMAuto.textContent = '⏸ PAUSE DUEL';
+          dom.btnMMAuto.classList.add('danger-cyber-btn');
+          state.minimaxAutoInterval = setInterval(async () => {
+            if (state.minimaxState && state.minimaxState.game_over) {
+              clearInterval(state.minimaxAutoInterval);
+              state.minimaxAutoInterval = null;
+              dom.btnMMAuto.textContent = '⏯ AUTO-DUEL';
+              dom.btnMMAuto.classList.remove('danger-cyber-btn');
+              return;
+            }
+            await playMinimaxMove(null);
+          }, 800);
+        }
+      });
+    }
+
+    // D-Pad buttons
+    if (dom.mmDpadBtns) {
+      dom.mmDpadBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dir = btn.dataset.dir;
+          if (dir) playMinimaxMove(dir);
+        });
+      });
+    }
+
+    // Keyboard Arrow Keys
+    window.addEventListener('keydown', (e) => {
+      if (state.activeTab !== 'minimax') return;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+        if (e.key === 'ArrowUp') playMinimaxMove('N');
+        else if (e.key === 'ArrowDown') playMinimaxMove('S');
+        else if (e.key === 'ArrowLeft') playMinimaxMove('W');
+        else if (e.key === 'ArrowRight') playMinimaxMove('E');
+        else if (e.key === ' ') playMinimaxMove('HOLD');
+      }
+    });
+  }
+
+  function initRoleSwitcher() {
+    if (dom.btnRoleCommander) {
+      dom.btnRoleCommander.addEventListener('click', () => {
+        state.currentRole = 'Fleet Commander';
+        dom.btnRoleCommander.classList.add('active');
+        if (dom.btnRoleCrew) dom.btnRoleCrew.classList.remove('active');
+        switchMainTab('vessel-position');
+      });
+    }
+    if (dom.btnRoleCrew) {
+      dom.btnRoleCrew.addEventListener('click', () => {
+        state.currentRole = 'Vessel Crew';
+        dom.btnRoleCrew.classList.add('active');
+        if (dom.btnRoleCommander) dom.btnRoleCommander.classList.remove('active');
+        if (dom.activeRoleBadge) dom.activeRoleBadge.textContent = 'VESSEL CREW';
+        switchMainTab('vessel-position');
+      });
+    }
+
+    // Crew sub-tabs pills (Vessel Position vs Threat Intelligence)
+    if (dom.crewPillBtns) {
+      dom.crewPillBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.crewTarget;
+          switchMainTab(target);
+          dom.crewPillBtns.forEach(b => {
+            b.classList.toggle('active', b.dataset.crewTarget === target);
+          });
+        });
+      });
+    }
   }
 
   // Initialize Application

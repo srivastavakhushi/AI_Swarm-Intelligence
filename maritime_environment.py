@@ -196,7 +196,7 @@ def water_route_clear(lat1, lon1, lat2, lon2):
 class MaritimeEnvironment:
     """Encapsulates the complete digital maritime environment for the Strait of Malacca."""
 
-    def __init__(self, csv_path="pirate_attacks.csv", weather_severity_factor=1.0):
+    def __init__(self, csv_path=None, weather_severity_factor=1.0):
         self.csv_path = csv_path
         self.weather_severity_factor = weather_severity_factor
         self.terrain = np.zeros((GRID_H, GRID_W), dtype=int)  # 0=water, 1=land
@@ -418,9 +418,9 @@ class MaritimeEnvironment:
     # Intelligence & environmental layers
     # ------------------------------------------------------------------
     def _load_pirate_intelligence(self):
-        """Loads and filters real pirate attack records in the Strait of Malacca corridor."""
-        if not os.path.exists(self.csv_path):
-            print(f"[Warning] Piracy dataset {self.csv_path} not found. Using baseline intelligence.")
+        """Loads and filters pirate attack records if dataset is provided."""
+        if not self.csv_path or not os.path.exists(self.csv_path):
+            self.pirate_incidents = []
             return
 
         try:

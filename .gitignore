@@ -13,3 +13,4 @@ users.db
 
 # Generated operational output
 operational_records.json
+*.zip

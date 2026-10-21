@@ -20,12 +20,18 @@ Run with:
 
 import json
 import os
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from maritime_environment import (
     PORTS,
@@ -36,6 +42,10 @@ from maritime_environment import (
     LON_MAX,
 )
 from workflow_system import MaritimeWorkflowSystem
+from fleet_service import fleet_service
+from expert_system import maritime_expert_system
+from genetic_algorithm_service import genetic_algorithm_optimizer, DEFAULT_PATROL_WAYPOINTS
+from minimax_evasion_service import minimax_evasion_game
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -84,6 +94,45 @@ class DeviationBody(BaseModel):
     lon_offset: float = 0.06
 
 
+class FleetTelemetryBody(BaseModel):
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    speed_knots: Optional[float] = None
+    heading_deg: Optional[float] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class FleetDeviationBody(BaseModel):
+    lat_offset: float = 0.08
+    lon_offset: float = 0.06
+    reason: str = "Tidal surface drift & evasive clearing"
+
+
+class FleetSimulateBody(BaseModel):
+    time_delta_sec: float = 60.0
+    step_minutes: Optional[float] = None
+
+
+class ExpertEvaluateBody(BaseModel):
+    vessel_id: Optional[str] = "VESSEL-001"
+    custom_facts: Optional[Dict[str, Any]] = None
+
+
+class GeneticAlgorithmBody(BaseModel):
+    population_size: Optional[int] = None
+    pop_size: Optional[int] = None
+    generations: int = 50
+    crossover_rate: float = 0.85
+    mutation_rate: float = 0.25
+    selected_waypoint_ids: Optional[List[str]] = None
+
+
+class MinimaxMoveBody(BaseModel):
+    action: Optional[str] = None
+    depth: int = 4
+
+
 app = FastAPI(
     title="Maritime Fleet Defense & ACO Route Optimizer",
     description="Risk-aware maritime routing dashboard powered by ACO, A*, and Dijkstra.",
@@ -91,7 +140,7 @@ app = FastAPI(
     default_response_class=NumpyJSONResponse,
 )
 
-system = MaritimeWorkflowSystem(csv_path=os.path.join(BASE_DIR, "pirate_attacks.csv"))
+system = MaritimeWorkflowSystem()
 
 
 @app.get("/")
@@ -284,6 +333,193 @@ def list_records():
         "voyages": system.completed_voyage_records,
         "audit_logs": system.audit_logs,
     }
+
+
+# =============================================================================
+# FLEET VESSEL POSITION TRACKING ENDPOINTS (VESSEL CREW & FLEET COMMANDER)
+# =============================================================================
+@app.get("/api/fleet/vessels")
+def get_fleet_vessels():
+    """
+    Returns real-time and simulated coordinates, speeds, headings, and status
+    of all fleet vessels. Fleet Commander view directly consumes this endpoint.
+    """
+    fleet_service.sync_primary_vessel(system.vessel_info)
+    return {
+        "status": "success",
+        "vessels": fleet_service.get_all_vessels(),
+        "count": len(fleet_service.vessels),
+    }
+
+
+@app.get("/api/fleet/vessels/{vessel_id}")
+def get_fleet_vessel(vessel_id: str):
+    """Returns telemetry details for a single fleet vessel."""
+    fleet_service.sync_primary_vessel(system.vessel_info)
+    v = fleet_service.get_vessel(vessel_id)
+    if not v:
+        return JSONResponse({"error": f"Vessel '{vessel_id}' not found."}, status_code=404)
+    return {"status": "success", "vessel": v}
+
+
+@app.post("/api/fleet/vessels/{vessel_id}/telemetry")
+def update_fleet_telemetry(vessel_id: str, body: FleetTelemetryBody):
+    """
+    Updates navigation coordinates, speed, heading, and status for a fleet vessel.
+    Propagates changes immediately so Fleet Commander view displays updated positions.
+    """
+    res = fleet_service.update_vessel_telemetry(
+        vessel_id,
+        lat=body.lat,
+        lon=body.lon,
+        speed_knots=body.speed_knots,
+        heading_deg=body.heading_deg,
+        status=body.status,
+        notes=body.notes,
+    )
+    if vessel_id == "VESSEL-001" and res.get("success"):
+        if body.lat is not None:
+            system.vessel_info["current_lat"] = body.lat
+        if body.lon is not None:
+            system.vessel_info["current_lon"] = body.lon
+        if body.speed_knots is not None:
+            system.vessel_info["speed_knots"] = body.speed_knots
+        if body.status is not None:
+            system.vessel_info["status"] = body.status
+    return res
+
+
+@app.post("/api/fleet/vessels/{vessel_id}/deviate")
+def deviate_fleet_vessel(vessel_id: str, body: FleetDeviationBody):
+    """
+    Reports a navigational offset / route deviation from the Vessel Crew console.
+    Immediately updates coordinates and syncs with Fleet Commander view.
+    """
+    res = fleet_service.report_vessel_deviation(
+        vessel_id,
+        lat_offset=body.lat_offset,
+        lon_offset=body.lon_offset,
+        reason=body.reason,
+    )
+    if vessel_id == "VESSEL-001" and res.get("success"):
+        system.report_route_deviation(body.lat_offset, body.lon_offset)
+    return res
+
+
+@app.post("/api/fleet/simulate_tick")
+def simulate_fleet_tick(body: FleetSimulateBody):
+    """
+    Advances simulated positions of all underway fleet vessels according to
+    their speed, heading vector, and elapsed time.
+    """
+    fleet_service.sync_primary_vessel(system.vessel_info)
+    delta_sec = body.step_minutes * 60.0 if body.step_minutes is not None else body.time_delta_sec
+    res = fleet_service.simulate_tick(delta_sec)
+    v1 = fleet_service.get_vessel("VESSEL-001")
+    if v1:
+        system.vessel_info["current_lat"] = v1["lat"]
+        system.vessel_info["current_lon"] = v1["lon"]
+    res["lead_vessel_position"] = {"lat": v1["lat"], "lon": v1["lon"]} if v1 else None
+    return res
+
+
+
+
+# =============================================================================
+# UNIT 6: MARITIME NAVIGATION RULE-BASED EXPERT SYSTEM & EXPLANATION FACILITY
+# =============================================================================
+@app.get("/api/ai/expert-system/rules")
+def get_expert_system_rules():
+    """Returns the production rules from the Expert System Knowledge Base."""
+    return {"status": "success", "rules": maritime_expert_system.get_all_rules()}
+
+
+@app.post("/api/ai/expert-system/evaluate")
+def evaluate_expert_system(body: ExpertEvaluateBody):
+    """
+    Evaluates current vessel state through the forward-chaining Inference Engine.
+    Returns triggered rules and 'WHY' & 'HOW' explanation facilities.
+    """
+    fleet_service.sync_primary_vessel(system.vessel_info)
+    vessel = fleet_service.get_vessel(body.vessel_id or "VESSEL-001")
+    if not vessel:
+        vessel = system.vessel_info
+
+    # Build working memory
+    wm = maritime_expert_system.build_working_memory(vessel)
+    if body.custom_facts:
+        wm.update(body.custom_facts)
+
+    inference_result = maritime_expert_system.infer(wm)
+    return inference_result
+
+
+# =============================================================================
+# UNIT 2: GENETIC ALGORITHM FOR FLEET PATROL & MULTI-PORT OPTIMIZATION
+# =============================================================================
+@app.get("/api/ai/genetic-algorithm/waypoints")
+def get_ga_waypoints():
+    """Returns available strategic patrol stations and ports for GA tour optimization."""
+    return {"status": "success", "waypoints": DEFAULT_PATROL_WAYPOINTS}
+
+
+@app.post("/api/ai/genetic-algorithm/run")
+def run_genetic_algorithm(body: GeneticAlgorithmBody):
+    """
+    Executes the Genetic Algorithm with selection, Order Crossover (OX1),
+    and inversion mutation to evolve the optimal multi-port patrol tour.
+    """
+    pop_size = body.pop_size or body.population_size or 40
+    res = genetic_algorithm_optimizer.run(
+        population_size=pop_size,
+        generations=body.generations,
+        crossover_rate=body.crossover_rate,
+        mutation_rate=body.mutation_rate,
+        selected_waypoint_ids=body.selected_waypoint_ids,
+    )
+    return res
+
+
+# =============================================================================
+# UNIT 2: ADVERSARIAL SEARCH - MINIMAX WITH ALPHA-BETA PRUNING
+# =============================================================================
+@app.get("/api/ai/minimax/state")
+def get_minimax_state():
+    """Returns the current tactical pursuit-evasion grid state."""
+    st = minimax_evasion_game.get_state()
+    return {"status": "success", "state": st, **st}
+
+
+@app.post("/api/ai/minimax/move")
+def play_minimax_move(body: MinimaxMoveBody):
+    """
+    Executes one turn of the adversarial pursuit-evasion game.
+    Runs recursive Minimax with Alpha-Beta pruning, tracking nodes evaluated
+    and pruned branches.
+    """
+    res = minimax_evasion_game.play_turn(action=body.action, depth=body.depth)
+    return res
+
+
+@app.post("/api/ai/minimax/reset")
+def reset_minimax_game():
+    """Resets the tactical pursuit-evasion board to initial positions."""
+    st = minimax_evasion_game.reset()
+    return {"status": "success", "state": st, **st}
+
+
+@app.get("/api/download/dashboard")
+@app.get("/download/dashboard")
+def download_dashboard():
+    """Serves the complete standalone Vessel Crew Dashboard zip archive."""
+    zip_path = os.path.join(BASE_DIR, "vessel_crew_dashboard.zip")
+    if os.path.exists(zip_path):
+        return FileResponse(
+            zip_path,
+            filename="vessel_crew_dashboard.zip",
+            media_type="application/zip",
+        )
+    return JSONResponse(status_code=404, content={"error": "Zip file not found."})
 
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
