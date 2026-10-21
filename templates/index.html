@@ -165,6 +165,9 @@
         <button class="nav-tab-btn" data-tab="communications">
           COMMUNICATIONS
         </button>
+        <button class="nav-tab-btn" data-tab="sys-admin">
+          SYS ADMIN
+        </button>
       </nav>
 
       <!-- Live KPI Telemetry Block -->
@@ -671,6 +674,241 @@
     </main>
 
     <!-- =============================================================== -->
+    <!-- VIEW TAB 6: SYSTEM ADMIN DASHBOARD                              -->
+    <!-- =============================================================== -->
+    <main id="view-sys-admin" class="tab-view-content">
+      <div class="admin-dashboard-wrapper">
+        <!-- Sub-Tab Navigation -->
+        <div class="admin-header-bar">
+          <div>
+            <h2 class="admin-main-title">SYSTEM ADMINISTRATION</h2>
+            <div class="admin-sub-title">AEGIS MARITIME — PLATFORM MANAGEMENT & ANALYTICS</div>
+          </div>
+          <div class="admin-subtab-bar">
+            <button class="admin-subtab-btn active" data-subtab="algo-viz">ALGORITHM ANALYTICS</button>
+            <button class="admin-subtab-btn" data-subtab="replan">REPLAN & SPEED</button>
+            <button class="admin-subtab-btn" data-subtab="sys-health">SYSTEM HEALTH</button>
+            <button class="admin-subtab-btn" data-subtab="risk-ledger">RISK LEDGER</button>
+            <button class="admin-subtab-btn" data-subtab="incidents-mgmt">INCIDENTS MGMT</button>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 1: Algorithm Analytics -->
+        <div class="admin-subtab-content active" id="subtab-algo-viz">
+          <div class="admin-grid-2col">
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot cyan"></span> ALGORITHM COMPARISON — BAR CHART</div>
+              <div class="admin-chart-wrap">
+                <canvas id="chart-algo-bar"></canvas>
+              </div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot green"></span> RISK PROFILE — RADAR CHART</div>
+              <div class="admin-chart-wrap">
+                <canvas id="chart-algo-radar"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="admin-card mt-2">
+            <div class="admin-card-title"><span class="pill-dot yellow"></span> ALGORITHM PERFORMANCE MATRIX</div>
+            <div class="admin-table-wrap">
+              <table class="admin-data-table" id="algo-perf-table">
+                <thead>
+                  <tr>
+                    <th>ALGORITHM</th><th>COST</th><th>DISTANCE (NM)</th><th>TIME (HRS)</th>
+                    <th>AVG RISK</th><th>MAX RISK</th><th>WAYPOINTS</th><th>NODES</th><th>RUNTIME (ms)</th><th>SAFE</th>
+                  </tr>
+                </thead>
+                <tbody id="algo-perf-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 2: Replanning & Speed -->
+        <div class="admin-subtab-content" id="subtab-replan">
+          <div class="admin-grid-3col">
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">VESSEL SPEED</div>
+              <div class="admin-stat-value text-cyan" id="replan-speed">18.0 KTS</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">ACTIVE ALGORITHM</div>
+              <div class="admin-stat-value text-emerald" id="replan-algo">ACO</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">RECALCULATIONS</div>
+              <div class="admin-stat-value text-amber" id="replan-recalc-count">0</div>
+            </div>
+          </div>
+          <div class="admin-grid-2col mt-2">
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot cyan"></span> ROUTE REPLAN SIMULATION</div>
+              <div class="replan-controls">
+                <div class="replan-field">
+                  <label>TARGET SPEED (KTS)</label>
+                  <input type="number" id="replan-speed-input" class="cyber-input-sm" value="18" min="5" max="30" step="0.5">
+                </div>
+                <div class="replan-field">
+                  <label>ALGORITHM</label>
+                  <select id="replan-algo-select" class="cyber-select-sm">
+                    <option value="aco">ACO (Ant Swarm)</option>
+                    <option value="astar">A* Search</option>
+                    <option value="dijkstra">Dijkstra</option>
+                    <option value="compare">COMPARE ALL</option>
+                  </select>
+                </div>
+                <button id="btn-replan-run" class="cyber-btn sm-cyber-btn primary-cyber-btn">⚡ SIMULATE REPLAN</button>
+              </div>
+              <div class="admin-chart-wrap" style="height:280px;">
+                <canvas id="chart-replan-comparison"></canvas>
+              </div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot orange"></span> THREAT SECTORS</div>
+              <div id="replan-threat-sectors" class="replan-threat-list"></div>
+              <div class="admin-card-title mt-2"><span class="pill-dot red"></span> ROUTE RISK COMPARISON</div>
+              <div id="replan-route-detail" class="replan-route-detail-box">
+                <div class="text-dim" style="padding:12px;">Run the solver to compare route risks across algorithms and speeds.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 3: System Health & Data Sources -->
+        <div class="admin-subtab-content" id="subtab-sys-health">
+          <div class="admin-grid-4col">
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">SYSTEM STATUS</div>
+              <div class="admin-stat-value text-emerald" id="health-status">OPERATIONAL</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">CPU USAGE</div>
+              <div class="admin-stat-value text-cyan" id="health-cpu">—</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">MEMORY USAGE</div>
+              <div class="admin-stat-value text-cyan" id="health-mem">—</div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">AUDIT LOGS</div>
+              <div class="admin-stat-value text-amber" id="health-logs">0</div>
+            </div>
+          </div>
+          <div class="admin-card mt-2">
+            <div class="admin-card-title"><span class="pill-dot cyan"></span> DATA SOURCE STATUS</div>
+            <div class="admin-table-wrap">
+              <table class="admin-data-table" id="datasource-table">
+                <thead>
+                  <tr><th>SOURCE</th><th>STATUS</th><th>VALID</th><th>LAST UPDATED</th></tr>
+                </thead>
+                <tbody id="datasource-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="admin-grid-2col mt-2">
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot green"></span> SYSTEM METRICS</div>
+              <div id="health-metrics-list" class="health-metrics-list"></div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot red"></span> DATA ALERTS</div>
+              <div id="health-alerts-list" class="health-alerts-list">
+                <div class="text-dim" style="padding:12px;">No data source alerts.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 4: Risk Ledger -->
+        <div class="admin-subtab-content" id="subtab-risk-ledger">
+          <div class="admin-grid-2col">
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot red"></span> ROUTE RISK BREAKDOWN</div>
+              <div id="risk-route-cards" class="risk-route-cards-list"></div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot cyan"></span> RISK FACTOR CHART</div>
+              <div class="admin-chart-wrap">
+                <canvas id="chart-risk-factors"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="admin-card mt-2">
+            <div class="admin-card-title"><span class="pill-dot yellow"></span> RISK AUDIT LOG</div>
+            <div class="admin-table-wrap" style="max-height:300px; overflow-y:auto;">
+              <table class="admin-data-table">
+                <thead>
+                  <tr><th>TIMESTAMP</th><th>STAGE</th><th>ACTOR</th><th>ACTION</th><th>DETAILS</th></tr>
+                </thead>
+                <tbody id="risk-audit-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 5: Piracy Incidents Management -->
+        <div class="admin-subtab-content" id="subtab-incidents-mgmt">
+          <div class="admin-card">
+            <div class="admin-card-title"><span class="pill-dot green"></span> ADD NEW PIRACY INCIDENT</div>
+            <div class="incident-form-grid">
+              <div class="incident-field">
+                <label>DATE</label>
+                <input type="date" id="inc-date" class="cyber-input-sm" value="2024-01-01">
+              </div>
+              <div class="incident-field">
+                <label>LATITUDE</label>
+                <input type="number" id="inc-lat" class="cyber-input-sm" value="1.5" step="0.01">
+              </div>
+              <div class="incident-field">
+                <label>LONGITUDE</label>
+                <input type="number" id="inc-lon" class="cyber-input-sm" value="103.5" step="0.01">
+              </div>
+              <div class="incident-field">
+                <label>ATTACK TYPE</label>
+                <select id="inc-type" class="cyber-select-sm">
+                  <option value="Attempted">Attempted</option>
+                  <option value="Boarded">Boarded</option>
+                  <option value="Hijacked">Hijacked</option>
+                  <option value="Fired Upon">Fired Upon</option>
+                  <option value="Suspicious">Suspicious</option>
+                </select>
+              </div>
+              <div class="incident-field">
+                <label>NEAREST COUNTRY</label>
+                <input type="text" id="inc-country" class="cyber-input-sm" value="Singapore">
+              </div>
+              <div class="incident-field">
+                <label>DESCRIPTION</label>
+                <input type="text" id="inc-desc" class="cyber-input-sm" value="Piracy incident reported" placeholder="Description...">
+              </div>
+              <div class="incident-field">
+                <button id="btn-add-incident" class="cyber-btn sm-cyber-btn success-cyber-btn full-width">+ ADD INCIDENT</button>
+              </div>
+            </div>
+          </div>
+          <div class="admin-card mt-2">
+            <div class="admin-card-title">
+              <span class="pill-dot red"></span> PIRACY INCIDENTS REGISTRY
+              <span class="admin-badge" id="incidents-total-badge">0</span>
+            </div>
+            <div class="admin-table-wrap" style="max-height:400px; overflow-y:auto;">
+              <table class="admin-data-table">
+                <thead>
+                  <tr>
+                    <th>#</th><th>DATE</th><th>LAT</th><th>LON</th><th>TYPE</th>
+                    <th>COUNTRY</th><th>DESCRIPTION</th><th>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody id="incidents-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+    <!-- =============================================================== -->
     <!-- 3. SYSTEM FOOTER (threat alerts live only in Threat Intel tab)   -->
     <!-- =============================================================== -->
     <div class="aegis-bottom-bar">
@@ -691,6 +929,8 @@
 
   <!-- Leaflet.js -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Chart.js for System Admin Dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <!-- Custom Aegis Application Engine -->
   <script src="/static/js/app.js"></script>
 </body>
