@@ -2,239 +2,173 @@
   "system_name": "Maritime Fleet Defense & Risk-Aware Route Optimization System",
   "study_area": "Strait of Malacca & Singapore Strait",
   "algorithm": "Pure Ant Colony Optimization (ACO)",
-  "exported_at": "2026-09-07T15:50:21.173375+00:00",
-  "completed_voyages": [],
+  "exported_at": "2026-10-20T12:36:38.200979+00:00",
+  "completed_voyages": [
+    {
+      "voyage_id": "VOY-MALACCA-1792499798",
+      "completed_at": "2026-10-20 12:36:38Z",
+      "vessel_name": "MV Sentinel Guardian",
+      "origin": "Penang (Malaysia)",
+      "destination": "Singapore (SE Gateway)",
+      "final_position": [
+        1.1681818181818182,
+        103.72972972972973
+      ],
+      "planned_distance_nm": 395.3,
+      "planned_time_hrs": 22.8,
+      "avg_risk_encountered": 1.7,
+      "max_piracy_exposure": 7.36,
+      "recalculations_required": 1,
+      "operational_status": "VOYAGE_SUCCESSFULLY_COMPLETED"
+    }
+  ],
   "audit_logs": [
     {
-      "timestamp": "2026-09-07 15:35:11Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Data Ingestion",
       "actor": "System",
       "action": "Update Real-Time Maritime Situation",
       "details": "Aggregated piracy incidents, meteorological forecasts, and AIS telemetry."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
+      "stage": "Data Ingestion",
+      "actor": "System",
+      "action": "Update Real-Time Maritime Situation",
+      "details": "Aggregated piracy incidents, meteorological forecasts, and AIS telemetry."
+    },
+    {
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Data Ingestion",
       "actor": "System",
       "action": "Detect Missing Data",
       "details": "External source 'AIS/GPS Vessel Tracking Feed' not responding."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Data Ingestion",
       "actor": "System",
       "action": "Use Last Valid Data",
       "details": "External source 'AIS/GPS Vessel Tracking Feed' unavailable. System defaulted to last valid cached telemetry."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Data Ingestion",
       "actor": "System",
       "action": "Update Real-Time Maritime Situation",
       "details": "Aggregated piracy incidents, meteorological forecasts, and AIS telemetry."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Data Ingestion",
       "actor": "System",
       "action": "Update Real-Time Maritime Situation",
       "details": "Aggregated piracy incidents, meteorological forecasts, and AIS telemetry."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Authentication",
       "actor": "System",
       "action": "Allow Login Retry",
       "details": "Failed attempt (1/3) for 'commander'."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Authentication",
       "actor": "System",
       "action": "Identify User Role",
       "details": "Authenticated 'commander' as role 'Fleet Commander'."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "Monitoring",
       "actor": "Fleet Commander",
       "action": "Monitor Maritime Threats",
       "details": "Identified high-density piracy clusters in Strait of Malacca (996 historical incidents)."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "AI Risk Analysis",
       "actor": "System",
       "action": "Evaluate Route Constraints",
       "details": "Routing from Penang (Malaysia) to Singapore (SE Gateway)."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "ACO Optimizer",
       "actor": "ACO Risk-Aware Route Optimizer",
       "action": "Initialize Ant Colony",
-      "details": "Colony size: 24 ants, 25 iterations."
+      "details": "Colony size: 28 ants, 35 iterations."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "ACO Optimizer",
       "actor": "ACO Risk-Aware Route Optimizer",
       "action": "Select Best Risk-Aware Route",
-      "details": "Primary ACO route synthesized. Distance: 380.5 nm, Cost: 85.16."
+      "details": "Primary ACO route synthesized. Distance: 376.1 nm, Cost: 85.07."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:36Z",
       "stage": "AI Risk Analysis",
       "actor": "AI Risk Analysis",
       "action": "Recommend Alternate Route",
       "details": "Primary path traverses elevated risk zone (Max Risk: 6.13). Running ACO alternate route search."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
+      "timestamp": "2026-10-20 12:36:37Z",
       "stage": "ACO Optimizer",
       "actor": "ACO Risk-Aware Route Optimizer",
       "action": "Select Best Risk-Aware Route",
-      "details": "Alternate ACO route found: 390.9 nm, Cost: 85.11."
+      "details": "Alternate ACO route found: 404.1 nm, Cost: 83.35."
     },
     {
-      "timestamp": "2026-09-07 15:37:05Z",
-      "stage": "Route Approval",
-      "actor": "Fleet Commander",
-      "action": "Approve Route",
-      "details": "Commander approved PRIMARY route (380.5 nm). Transmitted to vessel crew."
-    },
-    {
-      "timestamp": "2026-09-07 15:37:05Z",
-      "stage": "Voyage Execution",
-      "actor": "Vessel Crew",
-      "action": "Report Route Deviation",
-      "details": "Crew reported navigational offset of 0.1N, 0.05E due to local surface drift."
-    },
-    {
-      "timestamp": "2026-09-07 15:37:45Z",
-      "stage": "Monitoring",
-      "actor": "Fleet Commander",
-      "action": "Monitor Maritime Threats",
-      "details": "Identified high-density piracy clusters in Strait of Malacca (996 historical incidents)."
-    },
-    {
-      "timestamp": "2026-09-07 15:42:17Z",
-      "stage": "AI Risk Analysis",
-      "actor": "System",
-      "action": "Evaluate Route Constraints",
-      "details": "Routing from Penang (Malaysia) to Singapore (SE Gateway)."
-    },
-    {
-      "timestamp": "2026-09-07 15:42:17Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Initialize Ant Colony",
-      "details": "Colony size: 28 ants, 35 iterations."
-    },
-    {
-      "timestamp": "2026-09-07 15:42:17Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Select Best Risk-Aware Route",
-      "details": "Primary ACO route synthesized. Distance: 361.4 nm, Cost: 89.33."
-    },
-    {
-      "timestamp": "2026-09-07 15:42:17Z",
-      "stage": "AI Risk Analysis",
-      "actor": "AI Risk Analysis",
-      "action": "Recommend Alternate Route",
-      "details": "Primary path traverses elevated risk zone (Max Risk: 6.05). Running ACO alternate route search."
-    },
-    {
-      "timestamp": "2026-09-07 15:42:18Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Select Best Risk-Aware Route",
-      "details": "Alternate ACO route found: 395.3 nm, Cost: 85.02."
-    },
-    {
-      "timestamp": "2026-09-07 15:46:28Z",
-      "stage": "AI Risk Analysis",
-      "actor": "System",
-      "action": "Evaluate Route Constraints",
-      "details": "Routing from Penang (Malaysia) to Singapore (SE Gateway)."
-    },
-    {
-      "timestamp": "2026-09-07 15:46:28Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Initialize Ant Colony",
-      "details": "Colony size: 28 ants, 35 iterations."
-    },
-    {
-      "timestamp": "2026-09-07 15:46:29Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Select Best Risk-Aware Route",
-      "details": "Primary ACO route synthesized. Distance: 390.9 nm, Cost: 83.12."
-    },
-    {
-      "timestamp": "2026-09-07 15:46:29Z",
-      "stage": "AI Risk Analysis",
-      "actor": "AI Risk Analysis",
-      "action": "Recommend Alternate Route",
-      "details": "Primary path traverses elevated risk zone (Max Risk: 5.64). Running ACO alternate route search."
-    },
-    {
-      "timestamp": "2026-09-07 15:46:30Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Select Best Risk-Aware Route",
-      "details": "Alternate ACO route found: 384.9 nm, Cost: 85.29."
-    },
-    {
-      "timestamp": "2026-09-07 15:49:08Z",
-      "stage": "Authentication",
-      "actor": "System",
-      "action": "Identify User Role",
-      "details": "Authenticated 'crew' as role 'Vessel Crew'."
-    },
-    {
-      "timestamp": "2026-09-07 15:49:14Z",
-      "stage": "Authentication",
-      "actor": "System",
-      "action": "Identify User Role",
-      "details": "Authenticated 'admin' as role 'System Administrator'."
-    },
-    {
-      "timestamp": "2026-09-07 15:49:33Z",
+      "timestamp": "2026-10-20 12:36:37Z",
       "stage": "Route Approval",
       "actor": "Fleet Commander",
       "action": "Reject Route",
       "details": "Commander rejected route. Requesting Route Recalculation (Cycle 1)."
     },
     {
-      "timestamp": "2026-09-07 15:49:34Z",
+      "timestamp": "2026-10-20 12:36:38Z",
       "stage": "ACO Optimizer",
       "actor": "ACO Risk-Aware Route Optimizer",
       "action": "Iterate ACO Optimization",
-      "details": "Recalculated route synthesized. New distance: 380.5 nm."
+      "details": "Recalculated route synthesized. New distance: 395.3 nm."
     },
     {
-      "timestamp": "2026-09-07 15:49:41Z",
-      "stage": "Route Approval",
-      "actor": "Fleet Commander",
-      "action": "Reject Route",
-      "details": "Commander rejected route. Requesting Route Recalculation (Cycle 2)."
-    },
-    {
-      "timestamp": "2026-09-07 15:49:42Z",
-      "stage": "ACO Optimizer",
-      "actor": "ACO Risk-Aware Route Optimizer",
-      "action": "Iterate ACO Optimization",
-      "details": "Recalculated route synthesized. New distance: 401.9 nm."
-    },
-    {
-      "timestamp": "2026-09-07 15:49:51Z",
+      "timestamp": "2026-10-20 12:36:38Z",
       "stage": "Route Approval",
       "actor": "Fleet Commander",
       "action": "Approve Route",
-      "details": "Commander approved PRIMARY route (401.9 nm). Transmitted to vessel crew."
+      "details": "Commander approved PRIMARY route (395.3 nm). Transmitted to vessel crew."
+    },
+    {
+      "timestamp": "2026-10-20 12:36:38Z",
+      "stage": "Voyage Execution",
+      "actor": "Vessel Crew",
+      "action": "Report Route Deviation",
+      "details": "Crew reported navigational offset of 0.08N, 0.05E due to local surface drift."
+    },
+    {
+      "timestamp": "2026-10-20 12:36:38Z",
+      "stage": "Voyage Completion",
+      "actor": "System",
+      "action": "Complete Voyage",
+      "details": "Voyage VOY-MALACCA-1792499798 completed successfully."
+    },
+    {
+      "timestamp": "2026-10-20 12:36:38Z",
+      "stage": "Voyage Completion",
+      "actor": "System",
+      "action": "Store Route History",
+      "details": "Archived 45 waypoints."
+    },
+    {
+      "timestamp": "2026-10-20 12:36:38Z",
+      "stage": "Voyage Completion",
+      "actor": "System",
+      "action": "Generate Operational Records",
+      "details": "Exported voyage telemetry and safety KPIs."
     }
   ]
 }
