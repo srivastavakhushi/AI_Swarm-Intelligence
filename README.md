@@ -1,113 +1,178 @@
-# AEGIS: Maritime Fleet Defense & Pure ACO Route Optimizer
+# AI Swarm Intelligence
 
-### Experiment 4 Prototype • Autonomous Maritime Swarm Intelligence & Risk-Aware Navigation
+Maritime fleet defense dashboard for the Strait of Malacca. The web app plans water-only routes with Ant Colony Optimization (ACO), A*, and Dijkstra, and includes threat monitoring, commander review, and voyage tracking.
 
-Autonomous maritime fleet defense and dynamic route planning system for high-risk maritime corridors (Strait of Malacca). This project implements the core foundational architecture and all swimlanes from the **Software Engineering Experiment 4 UML Activity Diagram**:
+Run these commands from the repository root.
 
-- **External Maritime Data Feeds**: Real-time integration of historical piracy intelligence (996 incidents), Southwest Monsoon current drift, bathymetric navigational shoals, and restricted TSS chokepoints.
-- **Multi-Role Authentication & Security**: Role-based dispatch (Fleet Commander, Vessel Crew, System Admin) with a 3-attempt account lockout mechanism.
-- **Threat Monitoring & AI Risk Analysis**: Real-time threat zone detection and piracy cluster alerts.
-- **Pure Ant Colony Optimization (ACO) Engine**: Probabilistic ant swarm path construction with synthetic pheromone evaporation and heuristic desirability.
-- **Fleet Commander Review Loop**: Tactical route approval and dynamic recalculation trigger.
-- **Vessel Crew Voyage Transit**: Step-by-step route transit simulation and deviation reporting.
-- **Operational Audit Logging**: Complete immutable event logging and JSON record export.
+## Prerequisites
 
----
+- Python 3.10 or newer
+- Git
 
-## Base Model Screenshots & UI Previews
-
-### 1. Interactive Command Dashboard & ACO Route Synthesis
-The primary base dashboard showcasing the 7-stage UML Activity Diagram progress stepper, external telemetry feeds, threat detection alerts, and the synthesized water-navigable ACO safe route on the interactive maritime map.
-
-![Base Model Dashboard](docs/screenshots/base_dashboard.png)
-
-### 2. Ant Colony Optimization (ACO) Parameter Tuner & Convergence
-Interactive tuner interface allowing real-time parameter configuration (Ant Population $N_{\text{ants}}$, Max Iterations, Pheromone Sensitivity $\alpha$, Heuristic Desirability $\beta$, Evaporation Rate $\rho$) along with live Colony Route Cost Convergence curves.
-
-![ACO Parameter Tuner](docs/screenshots/base_aco_tuner.png)
-
-### 3. Operational Audit & Event Logging
-Immutable audit log recording every automated transition, ACO candidate evaluations, risk score computations, and commander approvals.
-
-![Base Operational Audit Logs](docs/screenshots/base_audit_logs.png)
-
----
-
-## Algorithmic Prototype & Machine Learning Visualizations
-
-### 1. Pure ACO Maritime Route Optimization & Cost Minimization
-Autonomous Ant Colony Optimization pathfinding across the Strait of Malacca displaying the primary safe corridor (395.3 NM), alternate route (404.1 NM), and iterative composite route cost minimization over 35 iterations.
-
-![ACO Malacca Prototype](aco_malacca_prototype.png)
-
-### 2. Machine Learning Piracy Risk Classifier & Confusion Matrix
-Random Forest classification predicting maritime cell risk levels from historical incident data, showing the model-predicted risk heatmap alongside the test-set confusion matrix (843 true risky, 93 true safe).
-
-![ML Risk Classifier Prototype](ml_risk_prototype.png)
-
-### 3. Multi-Algorithm Candidate Route Evaluation
-Candidate route comparison across real-data risk heatmaps evaluating shortest path (Dijkstra), heuristic risk penalty (A*), and probabilistic swarm optimization (ACO).
-
-![Route Comparison](route_comparison.png)
-
----
-
-## Repository Structure & Core Modules
-
-| File | Description |
-| :--- | :--- |
-| [`aco_engine.py`](aco_engine.py) | Pure Ant Colony Optimization (ACO) probabilistic engine and pheromone update rules |
-| [`risk_classifier_ai.py`](risk_classifier_ai.py) | Random Forest ML piracy risk model trained on historical incident data |
-| [`maritime_environment.py`](maritime_environment.py) | Discrete coordinate grid, nautical distance calculations, and hazard maps |
-| [`workflow_system.py`](workflow_system.py) | State-machine workflow engine coordinating all Experiment 4 swimlanes |
-| [`app.py`](app.py) | Flask web backend serving the interactive command dashboard |
-| [`pirate_attacks.csv`](pirate_attacks.csv) | Historical maritime piracy incidents dataset |
-| [`operational_records.json`](operational_records.json) | Exported audit telemetry and completed voyage records |
-| [`SE_EXP4_N068.pdf`](SE_EXP4_N068.pdf) | Software Engineering Experiment 4 academic lab report (Roll No: N068) |
-| [`run_prototype.py`](run_prototype.py) | Standalone end-to-end command-line simulation pipeline |
-| [`ai.py`](ai.py) | Standalone ACO routing and risk evaluation prototype |
-| [`templates/`](templates/) | HTML templates for the base web application |
-| [`static/`](static/) | CSS styling and JavaScript logic for the base web application |
-
----
-
-## Installation & Running the Base Application
-
-### 1. Environment Setup
+Check Python:
 
 ```bash
-# Create and activate virtual environment
-python3 -m venv .venv
+python --version
+```
+
+On some systems the command is `python3` instead of `python`. Use that name in every command below if `python` is not found.
+
+## Clone the repository
+
+```bash
+git clone https://github.com/srivastavakhushi/AI_Swarm-Intelligence.git
+cd AI_Swarm-Intelligence
+```
+
+## Create a virtual environment
+
+Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks the activate script, run this once, then activate again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+macOS and Linux:
+
+```bash
+python -m venv .venv
 source .venv/bin/activate
-
-# Install required dependencies
-pip install flask numpy pandas scikit-learn matplotlib
 ```
 
-### 2. Run the Web Dashboard
+## Install dependencies
+
+Dashboard:
 
 ```bash
-python app.py
+python -m pip install --upgrade pip
+python -m pip install fastapi uvicorn numpy pandas global-land-mask
 ```
 
-Open your browser and navigate to:
+Optional scripts (`run_prototype.py`, `risk_classifier_ai.py`, `ai.py`) also need plotting and the risk classifier:
+
+```bash
+python -m pip install matplotlib scikit-learn
+```
+
+## Start the dashboard
+
+```bash
+python -m uvicorn app.main:app --reload --port 5050
+```
+
+The same app can be started without reload:
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 5050
+```
+
+Or:
+
+```bash
+python -m app.main
+```
+
+Open the dashboard:
+
 ```text
 http://127.0.0.1:5050
 ```
 
-### 3. Run Standalone Prototypes
+Stop the server with `Ctrl+C` in the terminal where it is running.
 
-- **Complete Workflow Pipeline with Route Plots:**
-  ```bash
-  python run_prototype.py
-  ```
+## Sign in
 
-- **Trained AI Risk Classifier Evaluation:**
-  ```bash
-  python risk_classifier_ai.py
-  ```
+Default accounts are created in `users.db` on first startup. Password for all three is `test123`.
 
-- **Standalone ACO Route Optimization:**
-  ```bash
-  python ai.py
-  ```
+| Operator ID | Password | Role |
+| --- | --- | --- |
+| `commander` | `test123` | Fleet Commander |
+| `crew` | `test123` | Vessel Crew |
+| `admin` | `test123` | System Administrator |
+
+On the home page, choose an origin and destination in the Strait of Malacca, then run the solver. The Fleet Commander home view shows vessel status, the planned corridor, and the Malacca map.
+
+## Optional command-line prototypes
+
+Full workflow in the terminal, including route plots:
+
+```bash
+python run_prototype.py
+```
+
+Trained risk classifier prototype:
+
+```bash
+python risk_classifier_ai.py
+```
+
+Standalone routing prototype:
+
+```bash
+python ai.py
+```
+
+## AI Syllabus Modules (Units 2 & 6)
+
+The platform incorporates comprehensive Artificial Intelligence curriculum algorithms integrated into both the backend FastAPI service and the interactive cybernetic HUD dashboard:
+
+### 1. Option 1: Genetic Algorithm (GA) for Fleet Patrol / Multi-Port Optimization (Unit 2)
+- **Syllabus Topic**: Informed Search: Genetic Algorithm.
+- **Project Role**: Encodes multi-vessel waypoint routes and regional port delivery tours as permutation chromosomes across strategic Malacca stations (Penang Anchorage, One Fathom Bank, Port Klang, Dumai Straits, Phillips Channel, Singapore Roads, Belawan, Sabang).
+- **Genetic Operators**:
+  - **Tournament Selection** ($k=3$): Selects parent chromosomes probabilistically based on inverse tour distance fitness.
+  - **Order Crossover (OX1)**: Preserves legitimate travelling-salesperson permutation sequences without duplicate waypoints.
+  - **Inversion (2-opt) & Swap Mutation**: Prevents premature local optima convergence.
+  - **Elitism**: Retains the fittest individual across generations.
+- **Interactive UI**:
+  - Live Generation Evolution Graph tracking best tour distance convergence vs. population mean distance.
+  - Real-time fitness scoring and population diversity metric.
+  - Interactive tour sequence inspector and "Plot Tour on Map" spatial overlay.
+- **Endpoints**:
+  - `GET /api/ai/genetic-algorithm/waypoints`: Strategic waypoint catalog.
+  - `POST /api/ai/genetic-algorithm/run`: Triggers evolutionary optimization.
+
+### 2. Option 2: Adversarial Search — Minimax with Alpha-Beta Pruning (Unit 2)
+- **Syllabus Topic**: Adversarial Search: Optimal decisions in games, Minimax algorithm, Alpha-beta pruning.
+- **Project Role**: Transforms the tactical maritime sector into a dynamic 2-player zero-sum pursuit-evasion duel:
+  - **MAX Player**: Our Fleet Vessel attempting to navigate safely through coral shoals to an extraction gateway.
+  - **MIN Player**: Hostile Drone / Fast Patrol Interceptor calculating pursuit vectors.
+- **Alpha-Beta Pruning**:
+  - Computes depth-limited minimax game trees with $\alpha$-cutoff and $\beta$-cutoff pruning.
+  - Eliminates suboptimal subtrees whenever $\beta \le \alpha$, dramatically accelerating decision throughput.
+- **Interactive UI**:
+  - 8x8 tactical grid board with interactive water, coral reefs, extraction gateway, vessel, and interceptor tokens.
+  - Step-by-step Minimax execution, Auto-Duel playback, and manual helm directional keypad (N, S, E, W, NW, NE, SW, SE, HOLD).
+  - Alpha-Beta pruning telemetry displaying evaluated nodes, branches pruned, utility evaluation, and pruning efficiency %.
+  - Visual Decision Tree viewer illustrating evaluated branches vs pruned cutoffs.
+- **Endpoints**:
+  - `GET /api/ai/minimax/state`: Active game board state and pruning telemetry.
+  - `POST /api/ai/minimax/move`: Executes one Minimax turn or manual helm action.
+  - `POST /api/ai/minimax/reset`: Resets tactical grid to initial sector layout.
+
+### 3. Option 7: Rule-Based Maritime Expert System with "Why/How" Explanations (Unit 6)
+- **Syllabus Topic**: Expert System: Architecture (Knowledge base, inference engine, working memory), development process, explanation facility.
+- **Project Role**: Embedded navigation advisory intelligence ensuring IMO COLREGs compliance and shallow-water under-keel clearance along the Strait of Malacca.
+- **Architecture**:
+  - **Knowledge Base (KB)**: Priority-ranked production rules (`RULE-01` to `RULE-06`) governing squat effects, transit deviations, bottleneck chokepoints, monsoonal squalls, and exclusion zones.
+  - **Working Memory (WM)**: Active facts derived from live vessel AIS telemetry (depth, speed, heading, position, drift, chokepoint proximity).
+  - **Inference Engine (IE)**: Forward-chaining pattern matcher with priority dominance conflict resolution.
+  - **Explanation Facility (EF)**:
+    - **"WHY" Explanation**: Explains exactly why an advisory was issued, detailing matched antecedent premises, actual sensor values, regulatory rationale, and governing COLREGs rule.
+    - **"HOW" Explanation**: Visualizes the step-by-step forward-chaining derivation chain and asserted actions.
+- **Interactive UI**:
+  - Embedded AI Expert Advisory cockpit widget directly on the Vessel Position Command Deck.
+  - Live "⚡ RUN INFERENCE" and "❓ EXPLAIN ADVISORY (WHY / HOW)" quick-launch modal.
+  - Working Memory live facts table and interactive "What-If Sensor Test Lab" (slider override for depth, speed, weather, drift).
+  - Knowledge Base rule explorer with antecedent/consequent inspections.
+- **Endpoints**:
+  - `GET /api/ai/expert-system/rules`: Inspects complete Knowledge Base production rules.
+  - `POST /api/ai/expert-system/evaluate`: Runs forward-chaining inference on vessel telemetry or custom sandbox facts.

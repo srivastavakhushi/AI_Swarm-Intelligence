@@ -37,7 +37,7 @@ import database
 
 
 class MaritimeWorkflowSystem:
-    def __init__(self, csv_path="pirate_attacks.csv"):
+    def __init__(self, csv_path=None):
         self.env = MaritimeEnvironment(csv_path=csv_path)
         self.aco = AntColonyRouteOptimizer(self.env)
         self.graph = GraphSearchRouter(self.env)

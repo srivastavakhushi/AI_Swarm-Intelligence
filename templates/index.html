@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   
   <!-- Custom Aegis Cyber-Maritime CSS -->
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css?v=4.2">
 </head>
 <body class="aegis-hud-theme">
 
@@ -148,22 +148,19 @@
         <span class="marine-corridor">LIVE TRACKING &nbsp;|&nbsp; GLOBAL MARITIME SURVEILLANCE — STRAIT OF MALACCA CORRIDOR</span>
       </div>
 
-      <!-- Main Navigation Tabs Bar (5 View Tabs matching UI) -->
+      <!-- Main Navigation Tabs Bar -->
       <nav class="main-view-tabs">
-        <button class="nav-tab-btn active" data-tab="tactical">
-          TACTICAL <span class="nav-tab-badge">3</span>
+        <button class="nav-tab-btn" data-tab="tactical" id="nav-tab-tactical">
+          🗺️ ROUTE PLANNER (ACO)
         </button>
-        <button class="nav-tab-btn" data-tab="threat-intel">
-          THREAT INTEL
+        <button class="nav-tab-btn active" data-tab="vessel-position" id="nav-tab-vessel-position">
+          🛰️ VESSEL POSITION
         </button>
-        <button class="nav-tab-btn" data-tab="vessel-log">
-          VESSEL LOG
+        <button class="nav-tab-btn" data-tab="expert-system" id="nav-tab-expert-system">
+          🧠 EXPERT SYSTEM (WHY/HOW)
         </button>
-        <button class="nav-tab-btn" data-tab="ai-command">
-          AI COMMAND
-        </button>
-        <button class="nav-tab-btn" data-tab="communications">
-          COMMUNICATIONS
+        <button class="nav-tab-btn" data-tab="genetic-algorithm" id="nav-tab-genetic-algorithm">
+          🧬 GENETIC ALGORITHM (GA)
         </button>
       </nav>
 
@@ -216,25 +213,24 @@
           <div class="clock-date" id="utc-clock-date">2026-09-09 UTC</div>
         </div>
 
-        <div class="user-profile-badge">
-          <span class="avatar-rank">RA</span>
-          <div class="profile-details">
-            <span class="officer-name">R. ADML CROSS</span>
-            <span class="clearance-level"><strong id="active-role-badge">TS/SCI</strong></span>
-          </div>
+        <!-- Interactive Role Switcher -->
+        <div class="header-role-switcher" id="header-role-switcher">
+          <button type="button" class="role-switch-btn active" id="btn-role-commander" data-role="Fleet Commander" title="Switch to Fleet Commander Role">
+            ⚓ FLEET COMMANDER
+          </button>
+          <button type="button" class="role-switch-btn" id="btn-role-crew" data-role="Vessel Crew" title="Switch to Vessel Crew Role">
+            🛰️ VESSEL CREW
+          </button>
         </div>
 
-        <div class="marine-projection">ZOOM 100% — EQUIRECTANGULAR PROJECTION</div>
+        <div class="marine-projection">MALACCA AIS NET v4.2</div>
         <div class="header-action-btns">
           <button id="btn-logout" class="cyber-btn sm-cyber-btn danger-cyber-btn">LOGOUT</button>
         </div>
       </div>
     </header>
 
-    <!-- =============================================================== -->
-    <!-- VIEW TAB 1: TACTICAL COMMAND DASHBOARD (MATCHES UI #1)           -->
-    <!-- =============================================================== -->
-    <main id="view-tactical" class="tab-view-content active">
+    <main id="view-tactical" class="tab-view-content">
       <div class="marine-home">
         <aside class="marine-sidebar" id="marine-sidebar">
           <div class="marine-sidebar-kicker">REAL-TIME VESSEL TRACKING SYSTEM</div>
@@ -498,177 +494,507 @@
     </main>
 
     <!-- =============================================================== -->
-    <!-- VIEW TAB 2: THREAT INTELLIGENCE (MATCHES UI #3)                  -->
+    <!-- VIEW TAB: VESSEL POSITION (DEDICATED VESSEL CREW COCKPIT)       -->
+    <main id="view-vessel-position" class="tab-view-content active">
+      <div class="crew-dashboard-wrapper">
+        <!-- Sub-Tabs Header (When in Crew Role) -->
+        <div class="crew-subtabs-bar">
+          <div class="crew-subtabs-title">
+            <span class="crew-pulse-dot"></span>
+            <span class="crew-title-text">VESSEL CREW COMMAND DECK</span>
+            <span class="crew-sync-badge">● AIS BROADCAST TO FLEET COMMANDER ACTIVE</span>
+          </div>
+          <div class="crew-tabs-pills">
+            <button class="crew-pill-btn active" data-crew-target="vessel-position">🛰️ VESSEL POSITION</button>
+          </div>
+        </div>
+
+        <!-- Vessel Position Cockpit Grid -->
+        <div class="vessel-position-layout">
+          <!-- Left Telemetry & Helm Deck -->
+          <aside class="crew-helm-sidebar">
+            <div class="helm-panel-header">
+              <span class="helm-kicker">CONTROLLED FLEET ASSET</span>
+              <select id="crew-vessel-select" class="cyber-select-sm full-width mt-1">
+                <!-- Dynamically populated from /api/fleet/vessels -->
+              </select>
+            </div>
+
+            <div class="crew-telemetry-cards">
+              <!-- Coordinates Readout -->
+              <div class="crew-card">
+                <div class="card-label">CURRENT COORDINATES</div>
+                <div class="coord-display-main text-cyan" id="crew-coord-display">05° 24.960' N, 100° 20.700' E</div>
+                <div class="coord-decimal" id="crew-coord-decimal">(5.41600° N, 100.34500° E)</div>
+              </div>
+
+              <!-- Speed & Heading Gauges -->
+              <div class="crew-gauge-row">
+                <div class="crew-gauge-card">
+                  <div class="gauge-lbl">SPEED OVER GROUND</div>
+                  <div class="gauge-val text-cyan" id="crew-speed-display">18.0 <span class="unit">KTS</span></div>
+                  <div class="gauge-bar-bg"><div class="gauge-bar-fill" id="crew-speed-bar" style="width: 60%;"></div></div>
+                </div>
+                <div class="crew-gauge-card">
+                  <div class="gauge-lbl">HEADING &amp; BEARING</div>
+                  <div class="gauge-val text-emerald" id="crew-heading-display">135° <span class="unit">SE</span></div>
+                  <div class="compass-wrapper">
+                    <div class="compass-dial">
+                      <div class="compass-needle" id="crew-compass-needle">▲</div>
+                    </div>
+                    <span class="compass-bearing-label" id="crew-compass-bearing">135° SE</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vessel Metadata -->
+              <div class="crew-card">
+                <div class="meta-data-line">
+                  <span>STATUS:</span> <strong class="text-emerald" id="crew-vessel-status">MOORED</strong>
+                </div>
+                <div class="meta-data-line">
+                  <span>CALL SIGN:</span> <strong class="text-cyan" id="crew-vessel-callsign">9V-SG44</strong>
+                </div>
+                <div class="meta-data-line">
+                  <span>ORIGIN / DEST:</span> <strong class="text-white" id="crew-vessel-route">Penang ➔ Singapore</strong>
+                </div>
+                <div class="meta-data-line">
+                  <span>MMSI:</span> <span class="text-dim" id="crew-vessel-mmsi">563098110</span>
+                </div>
+                <div class="meta-data-line">
+                  <span>UNDER-KEEL DEPTH:</span> <strong class="text-cyan" id="crew-vessel-depth">12.5 M</strong>
+                </div>
+              </div>
+
+              <!-- Helm Controls (Speed & Course) -->
+              <div class="helm-controls-box">
+                <div class="box-title">HELM &amp; COURSE CONTROLS</div>
+                
+                <div class="control-row">
+                  <div class="control-lbl-row">
+                    <label for="crew-input-speed">SPEED (KNOTS):</label>
+                    <span id="crew-speed-val-label" class="text-cyan">18.0 KTS</span>
+                  </div>
+                  <input type="range" id="crew-input-speed" min="0" max="30" step="0.5" value="18" class="cyber-slider">
+                  <div class="speed-presets">
+                    <button type="button" class="preset-pill" data-speed="0">STOP</button>
+                    <button type="button" class="preset-pill" data-speed="8">SLOW</button>
+                    <button type="button" class="preset-pill" data-speed="14">HALF</button>
+                    <button type="button" class="preset-pill" data-speed="18">FULL</button>
+                    <button type="button" class="preset-pill" data-speed="24">FLANK</button>
+                  </div>
+                </div>
+
+                <div class="control-row mt-2">
+                  <div class="control-lbl-row">
+                    <label for="crew-input-heading">HEADING (°):</label>
+                    <span id="crew-heading-val-label" class="text-emerald">135°</span>
+                  </div>
+                  <input type="range" id="crew-input-heading" min="0" max="359" step="1" value="135" class="cyber-slider">
+                  <div class="heading-presets">
+                    <button type="button" class="preset-pill" id="btn-helm-port">-10° PORT</button>
+                    <button type="button" class="preset-pill" id="btn-helm-midships">0° MID</button>
+                    <button type="button" class="preset-pill" id="btn-helm-stbd">+10° STBD</button>
+                  </div>
+                </div>
+
+                <button id="btn-crew-apply-helm" class="cyber-btn primary-cyber-btn full-width mt-2">
+                  TRANSMIT TO FLEET COMMANDER
+                </button>
+              </div>
+
+              <!-- Simulation & Deviation Engine -->
+              <div class="simulation-controls-box mt-2">
+                <div class="box-title">SIMULATION TICKER &amp; DEVIATION</div>
+                <div class="sim-btn-group">
+                  <button id="btn-crew-sim-step" class="cyber-btn sm-cyber-btn">
+                    ▶ SIMULATE STEP (+1 MIN)
+                  </button>
+                  <button id="btn-crew-sim-auto" class="cyber-btn sm-cyber-btn accent-cyber-btn">
+                    ⏯ AUTO-TICKER
+                  </button>
+                </div>
+                
+                <div class="deviation-box mt-2">
+                  <button id="btn-crew-report-deviation" class="cyber-btn sm-cyber-btn warning-cyber-btn full-width">
+                    ⚠️ REPORT ROUTE DEVIATION
+                  </button>
+                  <div class="text-xs text-dim mt-1">
+                    Injects navigational drift offset (+0.08°N, +0.06°E) and logs immediate alert to Fleet Commander.
+                  </div>
+                </div>
+
+                <!-- AI Expert System Advisory Widget (Unit 6) -->
+                <div class="cockpit-expert-box mt-2">
+                  <div class="box-title" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>🧠 AI EXPERT ADVISORY (UNIT 6)</span>
+                    <span class="threat-badge nominal" id="cockpit-expert-badge">NOMINAL</span>
+                  </div>
+                  <div class="cockpit-expert-headline mt-1" id="cockpit-expert-headline">
+                    READY FOR INFERENCE
+                  </div>
+                  <div class="cockpit-expert-action text-xs text-dim mt-1" id="cockpit-expert-action">
+                    Click to test COLREGs &amp; navigation safety rules.
+                  </div>
+                  <div class="expert-widget-btn-row mt-2" style="display:flex; gap:6px;">
+                    <button id="btn-cockpit-run-expert" class="cyber-btn sm-cyber-btn primary-cyber-btn" style="flex:1;">
+                      ⚡ INFER
+                    </button>
+                    <button id="btn-cockpit-explain-expert" class="cyber-btn sm-cyber-btn" style="flex:1; border-color:#38bdf8; color:#38bdf8;">
+                      ❓ EXPLAIN
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Center Map & Fleet Status Table -->
+          <div class="crew-map-and-table-panel">
+            <div class="crew-map-stage">
+              <div id="crew-vessel-map" class="crew-map-canvas"></div>
+              
+              <div class="crew-map-overlay-title">
+                <span class="pill-dot green"></span> REAL-TIME FLEET VESSEL TRACKING
+                <span class="corridor-tag">STRAIT OF MALACCA CORRIDOR</span>
+              </div>
+
+              <div class="crew-map-legend">
+                <div><span class="legend-symbol cyan">▲</span> Active Vessel</div>
+                <div><span class="legend-symbol amber">▲</span> Escort / Patrol</div>
+                <div><span class="legend-symbol red">▲</span> Elevated Threat Asset</div>
+                <div><span class="legend-trail"></span> Navigation Trail</div>
+              </div>
+            </div>
+
+            <!-- Fleet Vessel Table -->
+            <div class="crew-fleet-table-wrapper">
+              <div class="fleet-table-header">
+                <h3>FLEET ASSET REGISTRY &amp; POSITION TELEMETRY</h3>
+                <span class="text-xs text-dim">Broadcasting live directly to Fleet Commander Tactical View</span>
+              </div>
+              <div class="table-scroll-container">
+                <table class="crew-fleet-grid">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>VESSEL NAME</th>
+                      <th>CLASS</th>
+                      <th>FLAG</th>
+                      <th>LATITUDE</th>
+                      <th>LONGITUDE</th>
+                      <th>HEADING</th>
+                      <th>SPEED</th>
+                      <th>STATUS</th>
+                      <th>ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody id="crew-fleet-table-body">
+                    <!-- Populated dynamically from /api/fleet/vessels -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <!-- =============================================================== -->
-    <main id="view-threat-intel" class="tab-view-content">
-      <div class="intel-dashboard-wrapper">
-        <div class="intel-header-bar">
+    <!-- VIEW TAB: EXPERT SYSTEM WITH WHY/HOW EXPLANATIONS (UNIT 6)      -->
+    <!-- =============================================================== -->
+    <main id="view-expert-system" class="tab-view-content">
+      <div class="ai-module-container">
+        <!-- Top Title & Subtitle Banner -->
+        <div class="ai-module-header">
           <div>
-            <h2 class="intel-main-title">THREAT INTELLIGENCE</h2>
-            <div class="intel-sub-title">EASTERN MEDITERRANEAN - CLASSIFICATION: SECRET</div>
+            <h2 class="ai-title">MARITIME NAVIGATION EXPERT SYSTEM</h2>
+            <div class="ai-sub">FORWARD-CHAINING PRODUCTION SYSTEM &bull; EXPLANATION FACILITY (WHY &amp; HOW) &bull; COLREGS COMPLIANCE</div>
           </div>
-          
-          <div class="intel-filter-buttons">
-            <button class="filter-btn active" data-severity="ALL">ALL</button>
-            <button class="filter-btn critical" data-severity="CRITICAL">CRITICAL</button>
-            <button class="filter-btn high" data-severity="HIGH">HIGH</button>
-            <button class="filter-btn medium" data-severity="MEDIUM">MEDIUM</button>
-            <button class="filter-btn low" data-severity="LOW">LOW</button>
+          <div class="ai-header-controls">
+            <label for="expert-vessel-select">TARGET FLEET VESSEL:</label>
+            <select id="expert-vessel-select" class="cyber-select-sm">
+              <!-- Dynamically populated from /api/fleet/vessels -->
+            </select>
+            <button id="btn-eval-expert" class="cyber-btn sm-cyber-btn primary-cyber-btn">
+              ⚡ RUN INFERENCE
+            </button>
           </div>
         </div>
 
-        <div class="threat-cards-container" id="threat-intel-cards-list">
-          <!-- Populated dynamically matching Image #3 -->
+        <div class="expert-system-grid">
+          <!-- Left Column: Working Memory & What-If Sandbox -->
+          <div class="expert-left-col">
+            <div class="cyber-panel">
+              <div class="panel-head-title">WORKING MEMORY (ACTIVE FACTS)</div>
+              <div class="panel-subtitle">Dynamic facts asserted from telemetry and maritime environment</div>
+              <div class="wm-facts-table-wrap mt-2">
+                <table class="cyber-data-table">
+                  <thead>
+                    <tr><th>FACT</th><th>VALUE</th><th>TYPE</th></tr>
+                  </thead>
+                  <tbody id="expert-wm-table-body">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- What-If Sandbox -->
+            <div class="cyber-panel mt-2">
+              <div class="panel-head-title">WHAT-IF SENSOR TEST LAB</div>
+              <div class="panel-subtitle">Override sensor values to test edge-case rule triggering</div>
+              <div class="sandbox-controls mt-2">
+                <div class="sandbox-row">
+                  <div class="control-lbl-row">
+                    <label for="sb-depth">UNDER-KEEL DEPTH:</label>
+                    <span id="sb-depth-val" class="text-cyan">10.5 m</span>
+                  </div>
+                  <input type="range" id="sb-depth" min="5" max="25" step="0.5" value="10.5" class="cyber-slider">
+                </div>
+                <div class="sandbox-row mt-1">
+                  <div class="control-lbl-row">
+                    <label for="sb-speed">SPEED OVER GROUND:</label>
+                    <span id="sb-speed-val" class="text-cyan">18.0 kts</span>
+                  </div>
+                  <input type="range" id="sb-speed" min="0" max="30" step="1" value="18" class="cyber-slider">
+                </div>
+                <div class="sandbox-row mt-1">
+                  <div class="control-lbl-row">
+                    <label for="sb-weather">WEATHER SQUALL FACTOR:</label>
+                    <span id="sb-weather-val" class="text-cyan">3.0</span>
+                  </div>
+                  <input type="range" id="sb-weather" min="1" max="10" step="0.5" value="3" class="cyber-slider">
+                </div>
+                <div class="sandbox-checkboxes mt-2">
+                  <label class="hud-toggle-sm">
+                    <input type="checkbox" id="sb-deviation">
+                    <span class="toggle-mark amber"></span> Simulate Route Deviation
+                  </label>
+                  <label class="hud-toggle-sm mt-1">
+                    <input type="checkbox" id="sb-chokepoint">
+                    <span class="toggle-mark cyan"></span> In Bottleneck Chokepoint
+                  </label>
+                </div>
+                <button id="btn-eval-sandbox" class="cyber-btn sm-cyber-btn primary-cyber-btn full-width mt-2">
+                  🧪 EVALUATE WHAT-IF SCENARIO
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Advisory & Explanation Facility -->
+          <div class="expert-right-col">
+            <!-- Advisory Verdict Card -->
+            <div class="expert-advisory-card" id="expert-verdict-card">
+              <div class="advisory-top-meta">
+                <span class="threat-badge nominal" id="expert-verdict-badge">NOMINAL</span>
+                <span class="advisory-rule-tag" id="expert-verdict-rule-id">RULE-06</span>
+                <span class="colreg-pill" id="expert-verdict-colreg">COLREG Rule 8</span>
+              </div>
+              <h3 class="advisory-headline" id="expert-verdict-headline">OPTIMAL TRANSIT PROFILE ACTIVE</h3>
+              <p class="advisory-message text-sm" id="expert-verdict-message">Vessel navigating within clear navigable water. Maintain scheduled speed and centerline heading.</p>
+              
+              <div class="advisory-specs-grid mt-2">
+                <div class="spec-cell">
+                  <span>RECOMMENDED ACTION:</span>
+                  <strong class="text-cyan" id="expert-spec-action">MAINTAIN_CRUISE</strong>
+                </div>
+                <div class="spec-cell">
+                  <span>TARGET SPEED:</span>
+                  <strong class="text-emerald" id="expert-spec-speed">18.0 KTS</strong>
+                </div>
+                <div class="spec-cell">
+                  <span>HELM COURSE TRIM:</span>
+                  <strong class="text-cyan" id="expert-spec-trim">0.0° MIDSHIPS</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Explanation Facility (WHY / HOW) -->
+            <div class="cyber-panel mt-2">
+              <div class="explanation-tabs-bar">
+                <button class="expl-tab-btn active" id="btn-expl-why" data-expl="why">
+                  ❓ WHY WAS THIS RECOMMENDED?
+                </button>
+                <button class="expl-tab-btn" id="btn-expl-how" data-expl="how">
+                  🔍 HOW WAS IT DERIVED?
+                </button>
+                <button class="expl-tab-btn" id="btn-expl-kb" data-expl="kb">
+                  📚 KNOWLEDGE BASE RULES (6)
+                </button>
+              </div>
+
+              <!-- WHY Content -->
+              <div class="expl-content-pane active" id="expl-pane-why">
+                <div class="expl-section-title" id="why-question-title">Why did the Expert System trigger this directive?</div>
+                <div class="premise-proof-box mt-2">
+                  <div class="proof-box-lbl">// PREMISE EVALUATION TRACE (ANTECEDENTS MATCHED)</div>
+                  <div id="why-premises-list" class="premises-stream mt-1">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+
+                <div class="justification-box mt-2">
+                  <div class="proof-box-lbl">// MARITIME SEAMANSHIP &amp; REGULATORY RATIONALE</div>
+                  <p class="text-sm mt-1" id="why-rationale-text">—</p>
+                  <div class="governing-standard mt-2">
+                    <span>GOVERNING STANDARD:</span>
+                    <strong class="text-cyan" id="why-standard-text">—</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- HOW Content -->
+              <div class="expl-content-pane hidden" id="expl-pane-how">
+                <div class="expl-section-title">Inference Engine Derivation Chain</div>
+                <div class="text-xs text-dim mb-2">Forward-Chaining pattern matching with Rule Priority Dominance resolution</div>
+                <div class="derivation-tree" id="how-derivation-list">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+
+              <!-- Knowledge Base Explorer -->
+              <div class="expl-content-pane hidden" id="expl-pane-kb">
+                <div class="kb-rules-list" id="kb-rules-accordion">
+                  <!-- Populated dynamically from /api/ai/expert-system/rules -->
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
 
     <!-- =============================================================== -->
-    <!-- VIEW TAB 3: VESSEL LOG DATA TABLE (MATCHES UI #4)                -->
+    <!-- VIEW TAB: GENETIC ALGORITHM FOR FLEET PATROL TOURS              -->
     <!-- =============================================================== -->
-    <main id="view-vessel-log" class="tab-view-content">
-      <div class="vessel-log-wrapper">
-        <div class="vessel-log-header">
+    <main id="view-genetic-algorithm" class="tab-view-content" style="overflow-y: auto;">
+      <div class="ai-module-container">
+        <!-- Top Header -->
+        <div class="ai-module-header">
           <div>
-            <h2 class="log-main-title">VESSEL LOG</h2>
-            <div class="log-sub-title">8 CONTACTS - EASTERN MEDITERRANEAN</div>
+            <h2 class="ai-title">GENETIC ALGORITHM FLEET PATROL OPTIMIZER</h2>
+            <div class="ai-sub">CHROMOSOME PERMUTATION &bull; ORDER CROSSOVER (OX1) &bull; INVERSION MUTATION &bull; MULTI-PORT CONVERGENCE</div>
           </div>
-
-          <div class="log-sort-group">
-            <button class="sort-btn" id="sort-btn-id">SORT: ID</button>
-            <button class="sort-btn active" id="sort-btn-threat">SORT: THREAT</button>
-            <button class="sort-btn" id="sort-btn-speed">SORT: SPEED</button>
+          <div class="ai-header-controls">
+            <button id="btn-run-ga" class="cyber-btn sm-cyber-btn primary-cyber-btn">
+              🧬 EVOLVE PATROL TOUR
+            </button>
+            <button id="btn-plot-ga-map" class="cyber-btn sm-cyber-btn" style="border-color:#00ff88; color:#00ff88;">
+              🗺️ PLOT TOUR ON MAP
+            </button>
           </div>
         </div>
 
-        <div class="vessel-table-container">
-          <table class="vessel-grid-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>NAME</th>
-                <th>CLASS</th>
-                <th>FLAG</th>
-                <th>LAT</th>
-                <th>LNG</th>
-                <th>HDG</th>
-                <th>SPEED</th>
-                <th>DEPTH</th>
-                <th>THREAT</th>
-                <th>AI CONF.</th>
-                <th>LAST CONTACT</th>
-                <th>MMSI</th>
-              </tr>
-            </thead>
-            <tbody id="vessel-log-table-body">
-              <!-- Dynamically populated matching Image #4 -->
-            </tbody>
-          </table>
+        <!-- Port Selection Panel -->
+        <div class="ga-port-selector-card">
+          <div class="ga-port-selector-header">
+            <div class="ga-port-selector-title">
+              <span>⚓ SELECT STRATEGIC PORTS &amp; STATIONS TO VISIT:</span>
+              <span id="ga-selected-count" class="text-cyan">10 / 10 PORTS SELECTED</span>
+            </div>
+            <div class="ga-port-presets">
+              <button type="button" class="ga-preset-btn" id="btn-ga-all">All (10)</button>
+              <button type="button" class="ga-preset-btn" id="btn-ga-core">Strait Core (5)</button>
+              <button type="button" class="ga-preset-btn" id="btn-ga-ports">Major Ports (6)</button>
+              <button type="button" class="ga-preset-btn" id="btn-ga-clear">Clear</button>
+            </div>
+          </div>
+          <div class="ga-port-chips-grid" id="ga-port-chips-container">
+            <!-- Dynamically populated by app.js from /api/ai/genetic-algorithm/waypoints -->
+          </div>
+        </div>
+
+        <!-- GA Config Bar -->
+        <div class="ga-config-bar">
+          <div class="config-cell">
+            <div class="control-lbl-row">
+              <label for="ga-pop-size">POPULATION SIZE:</label>
+              <span id="ga-pop-val" class="text-cyan">40</span>
+            </div>
+            <input type="range" id="ga-pop-size" min="10" max="100" step="5" value="40" class="cyber-slider">
+          </div>
+          <div class="config-cell">
+            <div class="control-lbl-row">
+              <label for="ga-generations">GENERATIONS:</label>
+              <span id="ga-gen-val" class="text-cyan">50</span>
+            </div>
+            <input type="range" id="ga-generations" min="10" max="120" step="5" value="50" class="cyber-slider">
+          </div>
+          <div class="config-cell">
+            <div class="control-lbl-row">
+              <label for="ga-crossover">CROSSOVER RATE (OX1):</label>
+              <span id="ga-cx-val" class="text-cyan">85%</span>
+            </div>
+            <input type="range" id="ga-crossover" min="0.5" max="1.0" step="0.05" value="0.85" class="cyber-slider">
+          </div>
+          <div class="config-cell">
+            <div class="control-lbl-row">
+              <label for="ga-mutation">MUTATION RATE (2-OPT):</label>
+              <span id="ga-mut-val" class="text-cyan">25%</span>
+            </div>
+            <input type="range" id="ga-mutation" min="0.05" max="0.6" step="0.05" value="0.25" class="cyber-slider">
+          </div>
+        </div>
+
+        <!-- GA KPI Bar -->
+        <div class="ga-kpi-bar mt-2">
+          <div class="ga-kpi-card">
+            <div class="ga-kpi-lbl">BEST PATROL DISTANCE</div>
+            <div class="ga-kpi-val text-cyan" id="ga-kpi-distance">— NM</div>
+          </div>
+          <div class="ga-kpi-card">
+            <div class="ga-kpi-lbl">FITNESS SCORE</div>
+            <div class="ga-kpi-val text-emerald" id="ga-kpi-fitness">—</div>
+          </div>
+          <div class="ga-kpi-card">
+            <div class="ga-kpi-lbl">GENERATIONS EVOLVED</div>
+            <div class="ga-kpi-val text-amber" id="ga-kpi-gens">0 / 50</div>
+          </div>
+          <div class="ga-kpi-card">
+            <div class="ga-kpi-lbl">SELECTED STATIONS</div>
+            <div class="ga-kpi-val text-white" id="ga-kpi-stations">10 WAYPOINTS</div>
+          </div>
+        </div>
+
+        <!-- GA Main Stage Split -->
+        <div class="ga-main-grid mt-2">
+          <!-- Evolution Chart Panel -->
+          <div class="cyber-panel">
+            <div class="panel-head-title">GENERATION EVOLUTION CONVERGENCE CURVE</div>
+            <div class="panel-subtitle">Tracks Best Distance vs Average Population Fitness across generations</div>
+            <div class="ga-chart-container mt-2">
+              <svg id="ga-evolution-svg" viewBox="0 0 560 220" class="ga-svg-chart"></svg>
+            </div>
+            <div class="chart-legend mt-1">
+              <div><span class="legend-line cyan"></span> Best Individual (Min Distance NM)</div>
+              <div><span class="legend-line amber dashed"></span> Population Average Distance</div>
+            </div>
+            <!-- Convergence Telemetry Summary -->
+            <div class="convergence-summary-row mt-2" id="ga-convergence-summary">
+              <div class="csum-pill"><span class="text-dim">START:</span> <strong id="ga-sum-start" class="text-amber">— NM</strong></div>
+              <div class="csum-arrow">➔</div>
+              <div class="csum-pill"><span class="text-dim">OPTIMAL:</span> <strong id="ga-sum-best" class="text-cyan">— NM</strong></div>
+              <div class="csum-badge" id="ga-sum-pct">READY TO EVOLVE</div>
+            </div>
+          </div>
+
+          <!-- Tour Waypoints List -->
+          <div class="cyber-panel">
+            <div class="panel-head-title">EVOLVED OPTIMAL PATROL SEQUENCE</div>
+            <div class="panel-subtitle">Order Crossover (OX1) optimized closed round-trip patrol cycle</div>
+            <div class="tour-sequence-scroll mt-2" id="ga-tour-sequence-list">
+              <div class="text-dim text-center py-4">Click 'EVOLVE PATROL TOUR' to run the Genetic Algorithm.</div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
 
-    <!-- =============================================================== -->
-    <!-- VIEW TAB 4: COMMUNICATIONS CONSOLE (MATCHES UI #5)               -->
-    <!-- =============================================================== -->
-    <main id="view-communications" class="tab-view-content">
-      <div class="comms-layout-wrapper">
-        <!-- Left Side: Radio Channels -->
-        <aside class="radio-channels-panel">
-          <div class="panel-head-title">RADIO CHANNELS</div>
-          <div class="channels-list" id="radio-channels-container">
-            <div class="channel-card active">
-              <div class="channel-head">
-                <span>● CHANNEL 16</span>
-                <span class="status-tag green">MONITORING</span>
-              </div>
-              <div class="channel-body">
-                MV ATLAS FORTUNE: SECURITE SECURITE - heavy weather advisory, Sector 2-Bravo
-              </div>
-              <div class="channel-time">00:02Z</div>
-            </div>
 
-            <div class="channel-card">
-              <div class="channel-head">
-                <span>● CHANNEL 06</span>
-                <span class="status-tag green">ACTIVE</span>
-              </div>
-              <div class="channel-body">
-                ALPHA ACTUAL: Request SITREP on V002 contact. Over.
-              </div>
-              <div class="channel-time">01:04Z</div>
-            </div>
 
-            <div class="channel-card">
-              <div class="channel-head">
-                <span>● CRYPTO NET 1</span>
-                <span class="status-tag green">ACTIVE</span>
-              </div>
-              <div class="channel-body">
-                [ENCRYPTED] MARCOM relay: additional ASW asset en route ETA 04:30Z.
-              </div>
-              <div class="channel-time">00:58Z</div>
-            </div>
 
-            <div class="channel-card">
-              <div class="channel-head">
-                <span>● SATCOM UPLINK</span>
-                <span class="status-tag red">DEGRADED</span>
-              </div>
-              <div class="channel-body">
-                Link degraded - atmospheric interference. Retrying...
-              </div>
-              <div class="channel-time">00:51Z</div>
-            </div>
-
-            <div class="channel-card">
-              <div class="channel-head">
-                <span>● HF NAVAL NET</span>
-                <span class="status-tag green">MONITORING</span>
-              </div>
-              <div class="channel-body">
-                NAVEUR broadcast: Exercise POSEIDON BATCH in effect - ROE Charlie.
-              </div>
-              <div class="channel-time">23:45Z</div>
-            </div>
-          </div>
-        </aside>
-
-        <!-- Right Side: Encrypted Message Log -->
-        <section class="message-log-panel">
-          <div class="panel-head-title">MESSAGE LOG</div>
-          <div class="messages-stream-list" id="encrypted-message-log">
-            <!-- Messages populated matching Image #5 -->
-          </div>
-        </section>
-      </div>
-    </main>
-
-    <!-- =============================================================== -->
-    <!-- VIEW TAB 5: AI COMMAND CENTER CONSOLE                            -->
-    <!-- =============================================================== -->
-    <main id="view-ai-command" class="tab-view-content">
-      <div class="ai-command-wrapper">
-        <div class="ai-command-header">
-          <h2 class="ai-main-title">AI COMMAND CONSOLE &amp; TACTICAL ASSISTANT</h2>
-          <div class="ai-sub-title">POWERED BY ACO NAVAL OPTIMIZER &amp; GPT-NAVAL CORE</div>
-        </div>
-
-        <div class="ai-chat-viewport" id="ai-command-chat-stream">
-          <div class="chat-msg system-msg">
-            <span class="msg-sender">SYSTEM:</span>
-            <div class="msg-content">
-              AEGIS AI Command Terminal initialized. Ask for optimal routing parameters, threat evasion tactics, or vessel intercept analysis.
-            </div>
-          </div>
-        </div>
-
-        <div class="ai-input-bar">
-          <input type="text" id="ai-command-input" placeholder="Type tactical command or route query (e.g. 'Compare ACO vs A* for Malacca Strait')..." autocomplete="off">
-          <button id="btn-send-ai-command" class="cyber-btn sm-cyber-btn primary-cyber-btn">SEND COMMAND</button>
-        </div>
-      </div>
-    </main>
 
     <!-- =============================================================== -->
     <!-- 3. SYSTEM FOOTER (threat alerts live only in Threat Intel tab)   -->
@@ -692,6 +1018,6 @@
   <!-- Leaflet.js -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Custom Aegis Application Engine -->
-  <script src="/static/js/app.js"></script>
+  <script src="/static/js/app.js?v=4.2"></script>
 </body>
 </html>
