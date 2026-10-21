@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   
   <!-- Custom Aegis Cyber-Maritime CSS -->
-  <link rel="stylesheet" href="/static/css/style.css?v=4.2">
+  <link rel="stylesheet" href="/static/css/style.css?v=4.6">
 </head>
 <body class="aegis-hud-theme">
 
@@ -71,7 +71,7 @@
         <div class="secure-access-box">
           <h2 class="secure-access-title">SECURE ACCESS</h2>
           <div class="clearance-req-lbl">AUTHORIZED PERSONNEL ONLY - TS/SCI CLEARANCE REQUIRED</div>
-          <div class="access-timestamp"><span class="ind-dot active"></span> <span id="login-live-time">2026-09-09 16:17:13Z</span></div>
+          <div class="access-timestamp"><span class="ind-dot active"></span> <span id="login-live-time">2026-10-21 22:30:00 IST</span></div>
 
           <!-- Preset Selection -->
           <div class="role-preset-box mt-3">
@@ -148,21 +148,29 @@
         <span class="marine-corridor">LIVE TRACKING &nbsp;|&nbsp; GLOBAL MARITIME SURVEILLANCE — STRAIT OF MALACCA CORRIDOR</span>
       </div>
 
+      <div class="header-ist" id="header-ist">
+        <div class="clock-time" id="utc-clock-time">--:--:-- IST</div>
+        <div class="clock-date" id="utc-clock-date">IST</div>
+      </div>
+
       <!-- Main Navigation Tabs Bar -->
       <nav class="main-view-tabs">
-        <button class="nav-tab-btn" data-tab="tactical" id="nav-tab-tactical">
+        <button class="nav-tab-btn" data-tab="tactical" data-roles="commander" id="nav-tab-tactical">
           🗺️ ROUTE PLANNER (ACO)
         </button>
-        <button class="nav-tab-btn active" data-tab="vessel-position" id="nav-tab-vessel-position">
+        <button class="nav-tab-btn" data-tab="commander-threat" data-roles="commander">
+          ⚠ THREAT INTELLIGENCE
+        </button>
+        <button class="nav-tab-btn active" data-tab="vessel-position" data-roles="crew" id="nav-tab-vessel-position">
           🛰️ VESSEL POSITION
         </button>
-        <button class="nav-tab-btn" data-tab="expert-system" id="nav-tab-expert-system">
-          🧠 EXPERT SYSTEM (WHY/HOW)
+        <button class="nav-tab-btn" data-tab="crew-threat" data-roles="crew">
+          ⚠ THREAT INTELLIGENCE
         </button>
-        <button class="nav-tab-btn" data-tab="genetic-algorithm" id="nav-tab-genetic-algorithm">
+        <button class="nav-tab-btn" data-tab="genetic-algorithm" data-roles="crew" id="nav-tab-genetic-algorithm">
           🧬 GENETIC ALGORITHM (GA)
         </button>
-        <button class="nav-tab-btn" data-tab="sys-admin">
+        <button class="nav-tab-btn" data-tab="sys-admin" data-roles="admin">
           SYS ADMIN
         </button>
       </nav>
@@ -205,28 +213,12 @@
         </div>
       </div>
 
-      <!-- Header Right Meta -->
+      <!-- Header Right Meta: signed-in user and logout only -->
       <div class="header-right-meta">
-        <div class="threat-level-badge amber-box">
-          <span class="badge-dot"></span> THREAT: ELEVATED
+        <div class="current-user-chip" id="current-user-chip">
+          <span class="current-user-name" id="current-user-name">—</span>
+          <span class="current-user-role" id="current-user-role">SIGNED OUT</span>
         </div>
-        
-        <div class="utc-clock-box">
-          <div class="clock-time" id="utc-clock-time">11:53:41Z</div>
-          <div class="clock-date" id="utc-clock-date">2026-09-09 UTC</div>
-        </div>
-
-        <!-- Interactive Role Switcher -->
-        <div class="header-role-switcher" id="header-role-switcher">
-          <button type="button" class="role-switch-btn active" id="btn-role-commander" data-role="Fleet Commander" title="Switch to Fleet Commander Role">
-            ⚓ FLEET COMMANDER
-          </button>
-          <button type="button" class="role-switch-btn" id="btn-role-crew" data-role="Vessel Crew" title="Switch to Vessel Crew Role">
-            🛰️ VESSEL CREW
-          </button>
-        </div>
-
-        <div class="marine-projection">MALACCA AIS NET v4.2</div>
         <div class="header-action-btns">
           <button id="btn-logout" class="cyber-btn sm-cyber-btn danger-cyber-btn">LOGOUT</button>
         </div>
@@ -1000,6 +992,76 @@
 
 
     <!-- =============================================================== -->
+    <!-- FLEET COMMANDER: MAIN THREAT INTELLIGENCE (GRAPHS ONLY)         -->
+    <!-- =============================================================== -->
+    <main id="view-commander-threat" class="tab-view-content">
+      <div class="threat-board">
+        <div class="threat-board-head">
+          <h2>MAIN THREATS</h2>
+          <p>Critical and high incidents from the vessel crew threat-intelligence feed. Lower-severity reports stay on the crew dashboard.</p>
+        </div>
+        <div class="threat-kpi-row">
+          <div class="threat-kpi"><span>MAIN THREATS</span><strong id="cmd-threat-total">—</strong></div>
+          <div class="threat-kpi"><span>CRITICAL</span><strong id="cmd-threat-critical" class="text-crimson">—</strong></div>
+          <div class="threat-kpi"><span>HIGH</span><strong id="cmd-threat-high" class="text-amber">—</strong></div>
+          <div class="threat-kpi"><span>SOURCE</span><strong style="font-size:12px;">VESSEL CREW</strong></div>
+        </div>
+        <div class="admin-grid-2col">
+          <div class="admin-card">
+            <div class="admin-card-title"><span class="pill-dot red"></span> MAIN THREATS BY REGION</div>
+            <div class="admin-chart-wrap"><canvas id="chart-cmd-threat-region"></canvas></div>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-title"><span class="pill-dot orange"></span> CRITICAL VS HIGH</div>
+            <div class="admin-chart-wrap"><canvas id="chart-cmd-threat-severity"></canvas></div>
+          </div>
+        </div>
+        <div class="threat-table-wrap">
+          <table class="threat-table">
+            <thead>
+              <tr><th>REF</th><th>DATE</th><th>VESSEL</th><th>REGION</th><th>CATEGORY</th><th>SEVERITY</th></tr>
+            </thead>
+            <tbody id="cmd-threat-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
+    <!-- VESSEL CREW: THREAT INTELLIGENCE REGISTER                       -->
+    <!-- =============================================================== -->
+    <main id="view-crew-threat" class="tab-view-content">
+      <div class="threat-board">
+        <div class="threat-board-head">
+          <h2>THREAT INTELLIGENCE</h2>
+          <p>IMO and regional piracy register used by the vessel crew. Fleet command reads the critical and high subset of this feed.</p>
+        </div>
+        <div class="threat-kpi-row">
+          <div class="threat-kpi"><span>TOTAL INCIDENTS</span><strong id="crew-threat-total">—</strong></div>
+          <div class="threat-kpi"><span>CRITICAL</span><strong id="crew-threat-critical" class="text-crimson">—</strong></div>
+          <div class="threat-kpi"><span>HIGH</span><strong id="crew-threat-high" class="text-amber">—</strong></div>
+          <div class="threat-kpi"><span>OTHER</span><strong id="crew-threat-other">—</strong></div>
+        </div>
+        <div class="threat-stage">
+          <div id="crew-threat-map" class="threat-map"></div>
+          <aside class="threat-dossier" id="crew-threat-dossier">
+            <h3 id="crew-dos-ship">Select an incident</h3>
+            <p id="crew-dos-meta">Map markers and the table below open the dossier.</p>
+            <p id="crew-dos-details"></p>
+          </aside>
+        </div>
+        <div class="threat-table-wrap">
+          <table class="threat-table">
+            <thead>
+              <tr><th>REF</th><th>MONTH</th><th>DATE</th><th>VESSEL</th><th>TYPE</th><th>FLAG</th><th>SECTOR</th><th>SEVERITY</th></tr>
+            </thead>
+            <tbody id="crew-threat-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- =============================================================== -->
     <!-- VIEW TAB 6: SYSTEM ADMIN DASHBOARD                              -->
     <!-- =============================================================== -->
     <main id="view-sys-admin" class="tab-view-content">
@@ -1008,7 +1070,7 @@
         <div class="admin-header-bar">
           <div>
             <h2 class="admin-main-title">SYSTEM ADMINISTRATION</h2>
-            <div class="admin-sub-title">AEGIS MARITIME — PLATFORM MANAGEMENT & ANALYTICS</div>
+            <div class="admin-sub-title">GRAPHS FOR FLEET COMMANDER AND VESSEL CREW</div>
           </div>
           <div class="admin-subtab-bar">
             <button class="admin-subtab-btn active" data-subtab="algo-viz">ALGORITHM ANALYTICS</button>
@@ -1023,20 +1085,20 @@
         <div class="admin-subtab-content active" id="subtab-algo-viz">
           <div class="admin-grid-2col">
             <div class="admin-card">
-              <div class="admin-card-title"><span class="pill-dot cyan"></span> ALGORITHM COMPARISON — BAR CHART</div>
+              <div class="admin-card-title"><span class="pill-dot cyan"></span> FLEET COMMANDER — ALGORITHM COMPARISON</div>
               <div class="admin-chart-wrap">
                 <canvas id="chart-algo-bar"></canvas>
               </div>
             </div>
             <div class="admin-card">
-              <div class="admin-card-title"><span class="pill-dot green"></span> RISK PROFILE — RADAR CHART</div>
+              <div class="admin-card-title"><span class="pill-dot green"></span> FLEET COMMANDER — RISK PROFILE</div>
               <div class="admin-chart-wrap">
                 <canvas id="chart-algo-radar"></canvas>
               </div>
             </div>
           </div>
           <div class="admin-card mt-2">
-            <div class="admin-card-title"><span class="pill-dot yellow"></span> ALGORITHM PERFORMANCE MATRIX</div>
+            <div class="admin-card-title"><span class="pill-dot yellow"></span> FLEET COMMANDER — ALGORITHM PERFORMANCE MATRIX</div>
             <div class="admin-table-wrap">
               <table class="admin-data-table" id="algo-perf-table">
                 <thead>
@@ -1047,6 +1109,17 @@
                 </thead>
                 <tbody id="algo-perf-tbody"></tbody>
               </table>
+            </div>
+          </div>
+          <div class="actor-kicker">VESSEL CREW — THREAT INTELLIGENCE</div>
+          <div class="admin-grid-2col">
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot red"></span> VESSEL CREW — INCIDENTS BY REGION</div>
+              <div class="admin-chart-wrap"><canvas id="chart-admin-crew-region"></canvas></div>
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-title"><span class="pill-dot orange"></span> VESSEL CREW — SEVERITY MIX</div>
+              <div class="admin-chart-wrap"><canvas id="chart-admin-crew-severity"></canvas></div>
             </div>
           </div>
         </div>
@@ -1234,8 +1307,10 @@
 
       </div>
     </main>
+    <div id="expert-alert-stack" class="expert-alert-stack" aria-live="polite"></div>
+
     <!-- =============================================================== -->
-    <!-- 3. SYSTEM FOOTER (threat alerts live only in Threat Intel tab)   -->
+    <!-- 3. SYSTEM FOOTER                                                 -->
     <!-- =============================================================== -->
     <div class="aegis-bottom-bar">
       <footer class="system-status-footer">
@@ -1258,6 +1333,6 @@
   <!-- Chart.js for System Admin Dashboard -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <!-- Custom Aegis Application Engine -->
-  <script src="/static/js/app.js?v=4.2"></script>
+  <script src="/static/js/app.js?v=4.6"></script>
 </body>
 </html>

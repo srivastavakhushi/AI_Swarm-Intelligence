@@ -140,25 +140,7 @@ The platform incorporates comprehensive Artificial Intelligence curriculum algor
   - `GET /api/ai/genetic-algorithm/waypoints`: Strategic waypoint catalog.
   - `POST /api/ai/genetic-algorithm/run`: Triggers evolutionary optimization.
 
-### 2. Option 2: Adversarial Search — Minimax with Alpha-Beta Pruning (Unit 2)
-- **Syllabus Topic**: Adversarial Search: Optimal decisions in games, Minimax algorithm, Alpha-beta pruning.
-- **Project Role**: Transforms the tactical maritime sector into a dynamic 2-player zero-sum pursuit-evasion duel:
-  - **MAX Player**: Our Fleet Vessel attempting to navigate safely through coral shoals to an extraction gateway.
-  - **MIN Player**: Hostile Drone / Fast Patrol Interceptor calculating pursuit vectors.
-- **Alpha-Beta Pruning**:
-  - Computes depth-limited minimax game trees with $\alpha$-cutoff and $\beta$-cutoff pruning.
-  - Eliminates suboptimal subtrees whenever $\beta \le \alpha$, dramatically accelerating decision throughput.
-- **Interactive UI**:
-  - 8x8 tactical grid board with interactive water, coral reefs, extraction gateway, vessel, and interceptor tokens.
-  - Step-by-step Minimax execution, Auto-Duel playback, and manual helm directional keypad (N, S, E, W, NW, NE, SW, SE, HOLD).
-  - Alpha-Beta pruning telemetry displaying evaluated nodes, branches pruned, utility evaluation, and pruning efficiency %.
-  - Visual Decision Tree viewer illustrating evaluated branches vs pruned cutoffs.
-- **Endpoints**:
-  - `GET /api/ai/minimax/state`: Active game board state and pruning telemetry.
-  - `POST /api/ai/minimax/move`: Executes one Minimax turn or manual helm action.
-  - `POST /api/ai/minimax/reset`: Resets tactical grid to initial sector layout.
-
-### 3. Option 7: Rule-Based Maritime Expert System with "Why/How" Explanations (Unit 6)
+### 2. Option 7: Rule-Based Maritime Expert System with "Why/How" Explanations (Unit 6)
 - **Syllabus Topic**: Expert System: Architecture (Knowledge base, inference engine, working memory), development process, explanation facility.
 - **Project Role**: Embedded navigation advisory intelligence ensuring IMO COLREGs compliance and shallow-water under-keel clearance along the Strait of Malacca.
 - **Architecture**:

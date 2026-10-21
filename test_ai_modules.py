@@ -5,14 +5,7 @@ from app.main import (
     get_ga_waypoints,
     run_genetic_algorithm,
     GeneticAlgorithmBody,
-    get_minimax_state,
-    play_minimax_move,
-    MinimaxMoveBody,
-    reset_minimax_game,
 )
-from expert_system import maritime_expert_system
-from genetic_algorithm_service import genetic_algorithm_optimizer
-from minimax_evasion_service import minimax_evasion_game
 
 def test_all():
     print("--- 1. Testing Option 7: Rule-Based Maritime Expert System (Unit 6) ---")
@@ -56,29 +49,8 @@ def test_all():
     assert len(ga_resp["best_tour"]) > 3
     assert len(ga_resp["evolution_history"]) > 0
 
-    print("\n--- 3. Testing Option 2: Minimax Adversarial Search (Unit 2) ---")
-    state_resp = get_minimax_state()
-    assert state_resp["grid_size"] == 8
-    print(f"Minimax Grid Initialized: 8x8 Sector, Vessel at {state_resp['vessel']}, Adversary at {state_resp['adversary']}, Gateway at {state_resp['gateway']}")
-    print(f"Turn: {state_resp['turn']} | Active Shoals/Reefs: {len(state_resp['reefs'])}")
-
-    # Step AI move
-    move_resp = play_minimax_move(MinimaxMoveBody(depth=3))
-    assert move_resp["status"] == "success"
-    stats = move_resp["stats"]
-    print(f"Minimax Step: Player = {move_resp['player']}, Move = {move_resp['move_executed']}, Utility = {move_resp['minimax_eval']}")
-    print(f"Alpha-Beta Pruning: Nodes Evaluated = {stats['nodes_evaluated']}, Branches Pruned = {stats['branches_pruned']}")
-    print(f"Decision Tree Nodes: {len(move_resp['decision_tree'])} candidate branches traced.")
-    assert stats["nodes_evaluated"] > 0
-    assert len(move_resp["decision_tree"]) > 0
-
-    # Reset
-    reset_resp = reset_minimax_game()
-    assert reset_resp["vessel"] == [7, 0]
-    print(f"Minimax Reset: Successfully reset vessel to {reset_resp['vessel']} and adversary to {reset_resp['adversary']}.")
-
     print("\n" + "=" * 65)
-    print("ALL 3 AI SYLLABUS TOPICS VERIFIED AND FULLY OPERATIONAL!")
+    print("AI SYLLABUS TOPICS VERIFIED AND FULLY OPERATIONAL!")
     print("=" * 65)
 
 if __name__ == "__main__":
